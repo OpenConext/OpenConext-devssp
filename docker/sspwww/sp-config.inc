@@ -34,7 +34,7 @@ $gIDPmap = array(
             3 => 'https://dev.openconext.local/assurance/sfo-level3',
         ),
     ),
-    'https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php' => array(
+    'https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php' => array(
         'name' => 'Local SSP IdP - ssp.dev.openconext.local',
         'loa' => array(
             1 => '',
