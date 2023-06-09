@@ -7,12 +7,12 @@
 // See: authsources.php for a list of accounts that are defined at this IdP
 
 /**
- * SAML 2.0 IdP configuration for simpleSAMLphp.
+ * SAML 2.0 IdP configuration for simplesaml.
  *
  * See: https://rnd.feide.no/content/idp-hosted-metadata-reference
  */
 
-$metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php'] = array(
+$metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array(
     /*
      * The hostname of the server (VHOST) that will use this SAML entity.
      *
@@ -152,6 +152,6 @@ $metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php
 );
 
 if ( isset($_COOKIE['testcookie']) ) {
-    $metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php']['publickey'] = '/vagrant/deploy/tests/behat/fixtures/test_public_key.crt';
-    $metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php']['privatekey'] = '/vagrant/deploy/tests/behat/fixtures/test_private_key.key';
+    $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php']['publickey'] = '/vagrant/deploy/tests/behat/fixtures/test_public_key.crt';
+    $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php']['privatekey'] = '/vagrant/deploy/tests/behat/fixtures/test_private_key.key';
 }

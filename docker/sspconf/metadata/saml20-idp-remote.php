@@ -9,8 +9,8 @@
 ////////////////////////////////////////////////////////////////////////////
 // Idp remote metadata of the IdP hosted at this instance (ssp.dev.openconext.local), for use by the hosted SPs
 
-$metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php'] = array (
-    'entityid' => 'https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php',
+$metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array (
+    'entityid' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php',
     'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
     'certificate' => 'idp.crt',
     'SingleSignOnService' =>
@@ -18,7 +18,7 @@ $metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php
             0 =>
                 array (
                     'Binding' => $GLOBALS['gSP_SSOBinding'],
-                    'Location' => 'https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/SSOService.php',
+                    'Location' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/SSOService.php',
                 ),
         ),
     'ArtifactResolutionService' =>
@@ -26,7 +26,7 @@ $metadata['https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/metadata.php
             0 =>
                 array (
                     'index' => 0,
-                    'Location' => 'https://ssp.dev.openconext.local/simplesamlphp/saml2/idp/ArtifactResolutionService.php',
+                    'Location' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/ArtifactResolutionService.php',
                     'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP',
                 ),
         ),

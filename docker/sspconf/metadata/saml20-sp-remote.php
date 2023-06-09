@@ -8,13 +8,13 @@
 ///////////////////////////////////////////////////////////////////////////////////
 // The "default-sp" SP hosted by this instance.
 
-$metadata['https://ssp.dev.openconext.local/simplesamlphp/module.php/saml/sp/metadata.php/default-sp'] = array(
+$metadata['https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/default-sp'] = array(
     'AssertionConsumerService' =>
         array (
             0 =>
                 array (
                     'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-                    'Location' => 'https://ssp.dev.openconext.local/simplesamlphp/module.php/saml/sp/saml2-acs.php/default-sp',
+                    'Location' => 'https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/saml2-acs.php/default-sp',
                     'index' => 0,
                 ),
         ),
@@ -23,7 +23,7 @@ $metadata['https://ssp.dev.openconext.local/simplesamlphp/module.php/saml/sp/met
             0 =>
                 array (
                     'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
-                    'Location' => 'https://ssp.dev.openconext.local/simplesamlphp/module.php/saml/sp/saml2-logout.php/default-sp',
+                    'Location' => 'https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/saml2-logout.php/default-sp',
                 ),
         ),
     'certificate' => 'sp.crt'
