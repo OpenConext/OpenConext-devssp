@@ -17,7 +17,7 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
         array (
             0 =>
                 array (
-                    'Binding' => $GLOBALS['gSP_SSOBinding'],
+                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/SSOService.php',
                 ),
         ),
@@ -52,7 +52,7 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
         array (
             0 =>
                 array (
-                    'Binding' => $GLOBALS['gSP_SSOBinding'],
+                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://gateway.dev.openconext.local/authentication/single-sign-on',
                 ),
         ),
@@ -92,7 +92,7 @@ $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata'] = 
         array (
             0 =>
                 array (
-                    'Binding' => $GLOBALS['gSP_SSOBinding'],
+                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://gateway.dev.openconext.local/second-factor-only/single-sign-on',
                 ),
         ),
