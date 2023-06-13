@@ -21,44 +21,44 @@ $config = array(
         'exampleauth:UserPass',
 
         'admin:admin' => array(
-            'NameID' => 'urn:collab:person:stepup.example.com:admin',
+            'NameID' => 'urn:collab:person:dev.openconext.local:admin',
             'uid' => array('admin'),
-            'mail' => 'admin@stepup.example.com',
-            'eduPersonPrincipalName' => 'admin@stepup.example.com',
+            'mail' => 'admin@dev.openconext.local',
+            'eduPersonPrincipalName' => 'admin@dev.openconext.local',
             'givenName' => 'Admin',
             'sn' => 'Admin',
             'cn' => 'Admin',
             'displayName' => 'Admin',
             'eduPersonAffiliation' => array('employee'),
-            'schacHomeOrganization' => 'stepup.example.com',
+            'schacHomeOrganization' => 'dev.openconext.local',
             'schacHomeOrganizationType' => 'urn:mace:terena.org:schac:homeOrganizationType:int:university',
         ),
 
         'pieter:pieter' => array(
-            'NameID' => 'urn:collab:person:stepup.example.com:pieter',
+            'NameID' => 'urn:collab:person:dev.openconext.local:pieter',
             'uid' => array('pieter'),
             'mail' => 'pieter.vanderMeulen@surfnet.nl',
-            'eduPersonPrincipalName' => 'pieter@stepup.example.com',
+            'eduPersonPrincipalName' => 'pieter@dev.openconext.local',
             'givenName' => 'Pieter',
             'sn' => 'van der Meulen',
             'cn' => 'Pieter van der Meulen',
             'displayName' => 'Pieter van der Meulen',
             'eduPersonAffiliation' => array('employee'),
-            'schacHomeOrganization' => 'stepup.example.com',
+            'schacHomeOrganization' => 'dev.openconext.local',
             'schacHomeOrganizationType' => 'urn:mace:terena.org:schac:homeOrganizationType:int:NREN',
         ),
 
         'joost:joost' => array(
-            'NameID' => 'urn:collab:person:stepup.example.com:joost',
+            'NameID' => 'urn:collab:person:dev.openconext.local:joost',
             'uid' => array('joost'),
             'mail' => 'joost.vanDijk@surfnet.nl',
-            'eduPersonPrincipalName' => 'joost@stepup.example.com',
+            'eduPersonPrincipalName' => 'joost@dev.openconext.local',
             'givenName' => 'Joost',
             'sn' => 'van Dijk',
             'cn' => 'Joost van Dijk',
             'displayName' => 'Joost van Dijk',
             'eduPersonAffiliation' => array('employee'),
-            'schacHomeOrganization' => 'stepup.example.com',
+            'schacHomeOrganization' => 'dev.openconext.local',
             'schacHomeOrganizationType' => 'urn:mace:terena.org:schac:homeOrganizationType:int:NREN',
         ),
 
@@ -205,12 +205,12 @@ if ( isset($_COOKIE['testcookie']) ) {
 
 // Accounts for accountgen script
 // Allows read email addresses to be used for multiple accounts
-// The accountsgen scrip mangles the email address to e.g. joe+slug@stepup.example.com
+// The accountsgen scrip mangles the email address to e.g. joe+slug@dev.openconext.local
 $accounts=array(
     // username => email (this can be a real email address)
-    'user' => 'user@stepup.example.com',
-    'joe' =>  'joe@stepup.example.com',
-    'jane' => 'jane@stepup.example.com',
+    'user' => 'user@dev.openconext.local',
+    'joe' =>  'joe@dev.openconext.local',
+    'jane' => 'jane@dev.openconext.local',
 );
 
 // List of varieties of account to generate
@@ -224,7 +224,7 @@ $slugs=array(
 // For all accounts the username is equal to the password. E.g. "joe-a1" / "joe-a1"
 foreach ($accounts as $user => $email) {
     //                   username   , email,  schachomeorganization
-    account_gen($config, "${user}-",  $email, 'stepup.example.com', $slugs);
+    account_gen($config, "${user}-",  $email, 'dev.openconext.local', $slugs);
     account_gen($config, "${user}-a", $email, 'institution-a.example.com', $slugs);
     account_gen($config, "${user}-b", $email, 'institution-b.example.com', $slugs);
     account_gen($config, "${user}-c", $email, 'institution-c.example.com', $slugs);
