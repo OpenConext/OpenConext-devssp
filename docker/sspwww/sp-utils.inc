@@ -157,7 +157,15 @@ function HTML_select($label, $id, $options, $value="", $info="")
 
 function NameIDArrayToHTML($nameID, $compact=false)
 {
-    foreach ($nameID as $key => $value) {
+    if ($nameID == NULL) {
+        echo '<code>NULL</code>';
+        return;
+    }
+    $nameID_array = array();
+    $nameID_array['Format'] = $nameID->getFormat();
+    $nameID_array['Value'] = $nameID->getValue();
+
+    foreach ($nameID_array as $key => $value) {
         $k = htmlentities($key);
         $v = htmlentities($value);
         $color='';
