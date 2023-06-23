@@ -108,16 +108,14 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 
         // Create an eduPersonTargetedID attribute with an unspecified NameID with the value
         // of the "NameID" attribute from the authsource.
-        /*
         3 => array(
             'class' => 'core:PHP',
             'code' =>
                 '
                 $nameId = new \SAML2\XML\saml\NameID();
-                $nameId->value = $attributes["NameID"][0];  // Use value of "NameID" attribute
-                $nameId->Format = \SAML2\Constants::NAMEID_UNSPECIFIED; // Unspecified NameID
-                //$nameId->NameQualifier = "...";
-                //$nameId->SPNameQualifier = "...";
+		$nameId->setValue($attributes["NameID"][0]);  // Use value of "NameID" attribute
+                $nameId->setFormat(\SAML2\Constants::NAMEID_UNSPECIFIED); // Unspecified NameID
+                //$nameId->setSPProvidedID = "...";
                 $doc = \SAML2\DOMDocumentFactory::create();
                 $root = $doc->createElement("root");
                 $doc->appendChild($root);
@@ -126,7 +124,7 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
                 $attributes["eduPersonTargetedID"] = array($eduPersonTargetedID);
                 ',
         ),
-        */
+
         // Remove the NameID attribute to prevent any confusion, it was only there to specify the NameID
         // to use in the Subject and eduPersonTargetedID attribute
         4 => array(
