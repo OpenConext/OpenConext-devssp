@@ -332,11 +332,8 @@ html;
         echo "        	<tr><td>".AttributeNameToHTML($attrName)."</td><td>\n";
         if (is_array($attrVal)) {
             for ($i=0;$i<sizeof($attrVal);$i++) {
-                if ($attrVal[$i] instanceof DOMNodeList) {
-                    foreach ($attrVal[$i] as $node) {
-                        $nameid=SAML2_Utils::parseNameId($node);
-                        NameIDArrayToHTML($nameid, true);
-                    }
+                if ($attrVal[$i] instanceof \SAML2\XML\saml\NameID) {
+                    NameIDArrayToHTML($attrVal[$i], true);
                 }
                 else {
                     echo "<code style='clear: both'>".htmlentities($attrVal[$i])."</code>";
