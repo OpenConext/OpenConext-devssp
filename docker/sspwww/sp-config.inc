@@ -21,9 +21,9 @@ $gIDPmap = array(
     'https://gateway.dev.openconext.local/authentication/metadata' => array(
         'name' => 'OpenConext Stepup Gateway - gateway.dev.openconext.local',
         'loa' => array(
-            1 => 'https://dev.openconext.local/authentication/loa1',
-            2 => 'https://dev.openconext.local/authentication/loa2',
-            3 => 'https://dev.openconext.local/authentication/loa3',
+            1 => 'http://dev.openconext.local/assurance/loa1',
+            2 => 'http://dev.openconext.local/assurance/loa2',
+            3 => 'http://dev.openconext.local/assurance/loa3',
         ),
     ),
     'https://gateway.dev.openconext.local/second-factor-only/metadata' => array(
