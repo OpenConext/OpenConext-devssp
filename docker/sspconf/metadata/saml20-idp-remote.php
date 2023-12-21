@@ -74,9 +74,6 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
         ),
 );
 
-if ( isset($_COOKIE['testcookie']) ) {
-    $metadata['https://gateway.dev.openconext.local/authentication/metadata']['keys'][0]['X509Certificate'] = depem(file_get_contents('/vagrant/deploy/tests/behat/fixtures/test_public_key.crt'));
-}
 
 ////////////////////////////////////////////////////////////////////////////
 // The metadata of the OpenConext Stepup IdP - SFO, for use by the hosted SPs
@@ -114,9 +111,6 @@ $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata'] = 
         ),
 );
 
-if ( isset($_COOKIE['testcookie']) ) {
-    $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata']['keys'][0]['X509Certificate'] = depem(file_get_contents('/vagrant/deploy/tests/behat/fixtures/test_public_key.crt'));
-}
 
 /**
  * Remove the spicing from the certificate, this is a php port of the python (keyczar) implementation that is used

@@ -149,8 +149,3 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
     ),
 
 );
-
-if ( isset($_COOKIE['testcookie']) ) {
-    $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php']['publickey'] = '/vagrant/deploy/tests/behat/fixtures/test_public_key.crt';
-    $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php']['privatekey'] = '/vagrant/deploy/tests/behat/fixtures/test_private_key.key';
-}
