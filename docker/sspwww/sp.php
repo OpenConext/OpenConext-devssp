@@ -188,8 +188,7 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
     if ( isset($_REQUEST['subject']) && strlen($_REQUEST['subject']) > 0 ) {
         $context['saml:NameID'] = array(
             'Value' => $_REQUEST['subject'],
-            'Format' => SAML2_Const::NAMEID_UNSPECIFIED,
-            'Format' => SAML2_Const::NAMEID_UNSPECIFIED,
+            'Format' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified',
         );
     }
 
