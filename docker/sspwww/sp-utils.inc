@@ -63,9 +63,9 @@ function HTMLColorFingerprint($value)
         }
     }
     // Convert from RGB values (0 .. 1) to hex (00 .. FF)
-    $color='#' .str_pad(dechex($r*256),2,'0',STR_PAD_LEFT)
-        .str_pad(dechex($g*256),2,'0',STR_PAD_LEFT)
-        .str_pad(dechex($b*256),2,'0',STR_PAD_LEFT);
+    $color='#' .str_pad(dechex((int)($r*256)),2,'0',STR_PAD_LEFT)
+        .str_pad(dechex((int)($g*256)),2,'0',STR_PAD_LEFT)
+        .str_pad(dechex((int)($b*256)),2,'0',STR_PAD_LEFT);
     return $color;
 }
 

@@ -1,24 +1,134 @@
 <?php
 
-// MANAGED BY ANSIBLE
+// This is the IdP that is hosted by this SSP instance.
+// It is used as a "remote IdP" by the stepup gateway and is configured to emulate the behaviour of 
+// OpenConext engineblock when it is used as an IdP proxy for the Stepup-Gateway
+// See: authsources.php for the list of accounts that are defined at this IdP
 
-// This is the IdP that is hosted by this instance.
-// It is used as a "remote IdP" by the stepup gateway
-// See: authsources.php for a list of accounts that are defined at this IdP
+// Since Stepup-Gateway 3.4.5 there are two ways to pass the ID of the user to the Stepup-Gateway:
+// 1. In the NameID in the Subject of the SAML Assertion. In this case the Subject NameID to pass the the SP
+//    behind the Stepup-Gateway must be specified in eduPersonTargetedID attribute in the SAML Assertion.
+// 2. In the urn:mace:surf.nl:attribute-def:internal-collabPersonId attribute in the SAML Assertion.
 
-/**
- * SAML 2.0 IdP configuration for simplesaml.
- *
- * See: https://rnd.feide.no/content/idp-hosted-metadata-reference
- */
+// The presence of the "urn:mace:surf.nl:attribute-def:internal-collabPersonId" decides which of the two methods
+// is used by the Stepup-Gateway: 
+// * If he attribute is not present (method 1), the Stepup-Gateway will use the value of the NameID in the Subject as the 
+// ID of the user. The NameID in the Subject to the SP must be specified in the eduPersonTargetedID attribute in the SAML Assertion and
+// the Stepup-Gateway will copy the NameId from the eduPersonTargetedID attribute to the Subject before passing the Assertion on to the SP.
+// * If the attribute is present (method 2), the Stepup-Gateway will use that value of the attribute as the 
+// ID of the user. The internal-collabPersonId will be filtered from the attributes present in the Assertions before it is
+// passed to the SP. The IdP does not have to add en eduPersonTargetedID attribute to the Assertion.
+// 
+// See https://www.pivotaltracker.com/n/projects/1163646/stories/181115261
+
+
+// Method 1 - use Subject and eduPersonTargetedID
+$subject_method1_authproc = array(
+    
+    // Generate an unspecified NameID for use by this IdP
+    // Note that this NameID won't be used until it is "selected" in the saml20-idp-hosted.php by adding:
+    //     'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    //
+    // Use the value of the "NameID" attribute from the authsource as value for the NameID
+    1 => array(
+        'class' => 'saml:AttributeNameID',
+        'attribute' => 'NameID',
+        'identifyingAttribute' => 'NameID',
+        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+
+        // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
+        'NameQualifier' => FALSE,
+        'SPNameQualifier' => FALSE,
+    ),
+
+    // Copy the NameID to the eduPersonTargetedID attribute
+    // This generates a eduPersonTargetedID with a PERSISTENT targeted NameID
+    //
+    // Note: #3 below generates a eduPersonTargetedID with an UNSPECIFIED targeted NameID
+    //       and will overwrite this eduPersonTargetedID
+    /*
+    2 => array(
+        'class' => 'core:TargetedID', // Generate a eduPersonTargetedID attribute
+        'attribute' => 'NameID',
+        'identifyingAttribute' => 'NameID',
+        'nameId' => TRUE,   // Use the "Nested" NameID format
+        // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
+        'NameQualifier' => FALSE,
+        'SPNameQualifier' => FALSE,
+    ),
+    */
+    
+    // Create an eduPersonTargetedID attribute with an unspecified NameID with the value
+    // of the "NameID" attribute from the authsource.
+    3 => array(
+        'class' => 'core:PHP',
+        'code' =>
+            '
+            $nameId = new \SAML2\XML\saml\NameID();
+            $nameId->setValue($attributes["NameID"][0]);  // Use value of "NameID" attribute
+            $nameId->setFormat(\SAML2\Constants::NAMEID_UNSPECIFIED); // Unspecified NameID
+            //$nameId->setSPProvidedID = "...";
+            $doc = \SAML2\DOMDocumentFactory::create();
+            $root = $doc->createElement("root");
+            $doc->appendChild($root);
+            $nameId->toXML($root);
+            $eduPersonTargetedID = $doc->saveXML($root->firstChild);
+            $attributes["eduPersonTargetedID"] = array($eduPersonTargetedID);
+            ',
+    ),
+
+    // Remove the NameID attribute from the attributes
+    // If you do not remove the nameID attribute here, it will be renamed to collabPersonId by the AttributeMap below
+    5 => array(
+        'class' => 'core:AttributeAlter',
+        'subject' => 'NameID',
+        'pattern' => '/.*/',
+        '%remove',
+    ),
+
+    // Convert "short" atribute names (uid, mail, eduPersonTargetedID, ...) to their long urn:mace...
+    // equivalent
+    // The map is defined in sspattributemap/Openconext_short_to_urn.php
+    // This will also convert the NameID attribute to urn:mace:surf.nl:attribute-def:internal-collabPersonId (method 2)
+    // when the NameId is present in the attributes
+    10 => array(
+        'class' => 'core:AttributeMap',
+        'Openconext_short_to_urn'
+    ),
+);
+
+$subject_method2_authproc = array( // internal-collabPersonId
+
+    // Generate an unspecified NameID for use by this IdP
+    // Note that this NameID won't be used until it is "selected" in the saml20-idp-hosted.php by adding:
+    //     'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    //
+    // Use the value of the "NameID" attribute from the authsource as value for the NameID
+    1 => array(
+        'class' => 'saml:AttributeNameID',
+        'attribute' => 'NameID',
+        'identifyingAttribute' => 'NameID',
+        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+
+        // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
+        'NameQualifier' => FALSE,
+        'SPNameQualifier' => FALSE,
+    ),
+
+    // Convert "short" atribute names (uid, mail, eduPersonTargetedID, ...) to their long urn:mace...
+    // equivalent
+    // The map is defined in sspattributemap/Openconext_short_to_urn.php
+    // This will also convert the NameID attribute to urn:mace:surf.nl:attribute-def:internal-collabPersonId (method 2)
+    // when the NameId is present in the attributes
+    10 => array(
+        'class' => 'core:AttributeMap',
+        'Openconext_short_to_urn'
+    ),
+); 
+
 
 $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array(
-    /*
-     * The hostname of the server (VHOST) that will use this SAML entity.
-     *
-     * Can be '__DEFAULT__', to use this entry by default.
-     */
-    'host' => '__DEFAULT__',
+    'host' => 'ssp.dev.openconext.local',
 
     'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
 
@@ -31,11 +141,6 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
      * 'config/authsources.php'.
      */
     'auth' => 'example-userpass',
-
-
-	//'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
-	//'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:basic',
-	'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified',
 
 	// Sign logout request and logout responses 
 	'redirect.sign' => TRUE,
@@ -60,88 +165,13 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
     // This is the NameID that will be but in the Subject of the SAML Assertion
     'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
 
-    // Authproc to make the output of this IdP sufficiently like OpenConext to allow
-    // OpenConext Stepup to work.
-    // The configured authsource must provide the required attributes.
-    // Required is an "NameID" attribute. This will be used both in the Subject and in the "eduPersonTargetedID"
-    //
-    'authproc' => array(
+    // Authproc to make the output of this IdP sufficiently like OpenConext engineblock to allow
+    // the OpenConext Stepup-Gateway to work. When the Stepup Gateway-Gateway is used as a Stepup proxy, it
+    // requires an IdP proxy (i.e. engineblock) to work with more than one IdP.
+    // The IdP proxy must pass the ID of the user to the Stepup-Gateway along with the attributes for the SP.    
 
-        // Generate an unspecified NameID for use by this IdP
-        // Note that this NameID won't be used until it is "selected" in the saml20-idp-hosted.php by adding:
-        //     'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
-        //
-        // Use the value of the "NameID" attribute from the authsource as value for the NameID
-        1 => array(
-            'class' => 'saml:AttributeNameID',
-            'attribute' => 'NameID',
-            'identifyingAttribute' => 'NameID',
-            'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
-
-            // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
-            'NameQualifier' => FALSE,
-            'SPNameQualifier' => FALSE,
-        ),
-
-        // Copy the NameID to the eduPersonTargetedID attribute
-        // Note that this will generate a eduPersonTargetedID with a PERSISTENT targeted NameID
-        //
-        // This will not work when the RA and Selfservice are behind the Stepup Gateway
-        // Using this might be useful to test the Stepup Gateway NameID passing behaviour
-        //
-        // When the Stepup Selfservice and RA are behind the Stepup Gateway the NameID in the Subject
-        // and the NameID in the eduPersonTargetedID must match so that the Stepup Gatway will pass it to
-        // the SelfService and RA applications. An eduPersonTargetedID with an UNSPECIFIED NameID
-        // (For OpenConext urn:collab:person:etc..) is non standard.
-        //
-        // If you enable this (2) rule you will want to disable the custom (3) rule below as it overwrites the
-        // eduPersonTargetedID generated by this rule.
-        2 => array(
-            'class' => 'core:TargetedID', // Generate a eduPersonTargetedID attribute
-            'attribute' => 'NameID',
-            'identifyingAttribute' => 'NameID',
-            'nameId' => TRUE,   // Use the "Nested" NameID format
-            // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
-            'NameQualifier' => FALSE,
-            'SPNameQualifier' => FALSE,
-        ),
-
-        // Create an eduPersonTargetedID attribute with an unspecified NameID with the value
-        // of the "NameID" attribute from the authsource.
-        3 => array(
-            'class' => 'core:PHP',
-            'code' =>
-                '
-                $nameId = new \SAML2\XML\saml\NameID();
-		$nameId->setValue($attributes["NameID"][0]);  // Use value of "NameID" attribute
-                $nameId->setFormat(\SAML2\Constants::NAMEID_UNSPECIFIED); // Unspecified NameID
-                //$nameId->setSPProvidedID = "...";
-                $doc = \SAML2\DOMDocumentFactory::create();
-                $root = $doc->createElement("root");
-                $doc->appendChild($root);
-                $nameId->toXML($root);
-                $eduPersonTargetedID = $doc->saveXML($root->firstChild);
-                $attributes["eduPersonTargetedID"] = array($eduPersonTargetedID);
-                ',
-        ),
-
-        // Remove the NameID attribute to prevent any confusion, it was only there to specify the NameID
-        // to use in the Subject and eduPersonTargetedID attribute
-        4 => array(
-            'class' => 'core:AttributeAlter',
-            'subject' => 'NameID',
-            'pattern' => '/.*/',
-            '%remove',
-        ),
-
-        // Convert "short" atribute names (uid, mail, eduPersonTargetedID, ...) to their long urn:mace...
-        // equivalent
-        10 => array(
-            'class' => 'core:AttributeMap',
-            'Openconext_short_to_urn'
-        ),
-
-    ),
+    //'authproc' => $subject_method1_authproc,
+    'authproc' => $subject_method2_authproc,
 
     // Required because the eduPersonTargetedID is a "complex" attribute and not a simple string value.
     'attributeencodings' => array(
@@ -149,3 +179,4 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
     ),
 
 );
+

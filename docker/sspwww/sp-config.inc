@@ -3,13 +3,13 @@
 $_SERVER['HTTPS'] = 'on';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// List of the avaiable remote SAML 2.0 identity providers in the SP interface
+// List of the available remote SAML 2.0 identity providers in the SP interface
 // The SP interface allows selection of the IdP and the (Requested) AuthnContextClassRef
 // The IdP must be configured in saml20-idp-remote.php
 
 $gIDPmap = array(
     /*
-    'EntityID of the IdP as it appers in saml20-idp-remote.php' => array(
+    'EntityID of the IdP as it appears in saml20-idp-remote.php' => array(
         'name' => 'Displayname of the IdP in the SP interface',
         'loa' => array(
           1 => 'AuthnContextClassRef for loa 1',

@@ -16,6 +16,8 @@ $attributemap = array(
     // urn:mace:terena.org
 	'schacHomeOrganization'		=> 'urn:mace:terena.org:attribute-def:schacHomeOrganization',
 	'schacHomeOrganizationType'	=> 'urn:mace:terena.org:attribute-def:schacHomeOrganizationType',
+
+	'NameID'					=> 'urn:mace:surf.nl:attribute-def:internal-collabPersonId',
 );
 
 ?>
