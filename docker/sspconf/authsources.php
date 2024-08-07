@@ -175,7 +175,7 @@ $accounts=array(
 
 // List of varieties of account to generate
 $slugs=array(
-    "1", "2", "3", "4", "5", "sms", "-yk", "-tiqr", "-u2f", "-bio", "-ra", "-raa"
+    "1", "2", "3", "4", "5", "-sms", "-yk", "-tiqr", "-u2f", "-ra", "-raa"
 );
 
 // for a username 'joe' this will generate joe-a1, joe-a2, ..., joe-a-yk, ... joe-a-raa
