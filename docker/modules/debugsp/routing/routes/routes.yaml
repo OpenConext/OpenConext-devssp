@@ -1,0 +1,18 @@
+---
+
+# Routes for the debugsp module.
+# paths are relative to the module base path. I.e. <baseurlpath>/module.php/debugsp/
+
+debug-sp-assertionConsumerService:
+  path: /acs/{sourceId}
+  defaults: {
+    _controller: 'SimpleSAML\Module\debugsp\Controller\ServiceProvider::assertionConsumerService'
+  }
+  methods: [GET, POST]
+
+debug-sp-metadata:
+  path: /metadata/{sourceId}
+  defaults: {
+    _controller: 'SimpleSAML\Module\debugsp\Controller\ServiceProvider::metadata'
+  }
+  methods: [GET]

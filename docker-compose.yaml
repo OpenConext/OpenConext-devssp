@@ -1,0 +1,33 @@
+services:
+  haproxy:
+    image: ghcr.io/openconext/openconext-basecontainers/haproxy26:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      devsp_network:
+        aliases:
+          - ssp.dev.openconext.local
+    hostname: haproxy.docker
+
+  ssp:
+    build: ./docker/
+    hostname: ssp.docker
+    networks:
+      devsp_network:
+    volumes:
+      # Make the ssp configuration from OpenConext-devconf available in the container
+      - ./../OpenConext-devconf/stepup/ssp:/var/www/simplesaml/config/cert/
+
+      # A copy of the /var/www/simplesaml/ directory to make this available to the host
+      - ./container-files/simplesaml:/simplesaml/
+
+      # Contains the sync script that is used to make the copy.
+      - ./container-files/scripts:/scripts/
+
+networks:
+  # create a local only network for the devssp container
+  devsp_network:
+    driver: bridge
+
+

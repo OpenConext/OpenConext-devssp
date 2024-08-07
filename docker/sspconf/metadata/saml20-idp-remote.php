@@ -1,13 +1,16 @@
 <?php
 
-// MANAGED BY ANSIBLE
-
 // This file defines remote IdPs. These are the IdPs that the SPs hosted by this SSP instance can use for
-// authentication
-
+// authentication.
 
 ////////////////////////////////////////////////////////////////////////////
 // Idp remote metadata of the IdP hosted at this instance (ssp.dev.openconext.local), for use by the hosted SPs
+// Even though this IdP is hosted by this SSP instance, it is considered remote from the SSP SP's perspective so it needs
+// to be defined here as a remote IdP. This hosted IdP is defined in sspconf/metadata/saml20-idp-hosted.php file.
+
+// $GLOBALS['gSP_SSOBinding'] is set from the Test SP.
+if (! isset($GLOBALS['gSP_SSOBinding']) )
+    $GLOBALS['gSP_SSOBinding'] = 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect';
 
 $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array (
     'entityid' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php',
@@ -17,29 +20,19 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
         array (
             0 =>
                 array (
-                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+                    'Binding' => $GLOBALS['gSP_SSOBinding'] ?? 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/SSOService.php',
-                ),
-        ),
-    'ArtifactResolutionService' =>
-        array (
-            0 =>
-                array (
-                    'index' => 0,
-                    'Location' => 'https://ssp.dev.openconext.local/simplesaml/saml2/idp/ArtifactResolutionService.php',
-                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP',
                 ),
         ),
     'name' => array(
         'en' => 'ssp.dev.openconext.local - SSP Test IdP',
         'nl' => 'ssp.dev.openconext.local - SSP Test IdP',
     ),
-
 );
 
 
 ////////////////////////////////////////////////////////////////////////////
-// The metadata of the OpenConext Stepup IdP, for use by the hosted SPs
+// The metadata of the Stepup-Gateway IdP, for use by the hosted SPs
 
 $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = array (
     'entityid' => 'https://gateway.dev.openconext.local/authentication/metadata',
@@ -52,14 +45,11 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
         array (
             0 =>
                 array (
-                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+                    'Binding' => $GLOBALS['gSP_SSOBinding'] ?? 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://gateway.dev.openconext.local/authentication/single-sign-on',
                 ),
         ),
     'SingleLogoutService' =>
-        array (
-        ),
-    'ArtifactResolutionService' =>
         array (
         ),
     'keys' =>
@@ -76,7 +66,7 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
 
 
 ////////////////////////////////////////////////////////////////////////////
-// The metadata of the OpenConext Stepup IdP - SFO, for use by the hosted SPs
+// The metadata of the Stepup-Gateway SFO (second factor only) IdP, for use by the hosted SPs
 
 $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata'] = array (
     'entityid' => 'https://gateway.dev.openconext.local/second-factor-only/metadata',
@@ -89,7 +79,7 @@ $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata'] = 
         array (
             0 =>
                 array (
-                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+                    'Binding' => $GLOBALS['gSP_SSOBinding'] ?? 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                     'Location' => 'https://gateway.dev.openconext.local/second-factor-only/single-sign-on',
                 ),
         ),
@@ -110,23 +100,3 @@ $metadata['https://gateway.dev.openconext.local/second-factor-only/metadata'] = 
                 ),
         ),
 );
-
-
-/**
- * Remove the spicing from the certificate, this is a php port of the python (keyczar) implementation that is used
- * in the ninja templates ( return re.sub(r'\s+|(-----(BEGIN|END).*-----)', '', string) )
- */
-function depem($input)
-{
-    return str_replace([
-        '-----BEGIN CERTIFICATE-----',
-        '-----END CERTIFICATE-----',
-        "\r\n",
-        "\n",
-    ], [
-        '',
-        '',
-        "\n",
-        ''
-    ], $input);
-}
