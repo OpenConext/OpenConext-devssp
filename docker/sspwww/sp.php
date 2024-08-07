@@ -388,11 +388,12 @@ HTML_select('Request LOA: ', 'loa',
     array(
         "" => "None",
         "1" => "1",
+        "1.5" => "1.5",
         "2" => "2",
         "3" => "3",
     ),
     $loa,
-"Select the level of assurance to include in the AuthnContextClassRef in the AuthnRequest. The value depends on the selected IdP and LoA and is only added when the IdP supports it."
+"Select the level of assurance to include in the AuthnContextClassRef in the AuthnRequest. The value depends on the selected IdP and the selectded LoA and is only added when the IdP supports it."
 );
 
 echo <<<html
@@ -522,7 +523,9 @@ echo <<<html
                <p>
                    <label title="Specify the value of a NameID to put in a Subject element in the AuthnRequest. If specified a NameID of type 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified' is added to the AuthnRequest.">Subject:</label><input type="text" name="subject" list="commonSubjects" value="{$subject}" size="80" />
                    <datalist id="commonSubjects">
-                        <option value="urn:collab:person:stepup.example.com:admin" />
+                        <option value="urn:collab:person:dev.openconext.local:admin" />
+                        <option value="urn:collab:person:institution-a.example.com:jane-a1" />
+                        <option value="urn:collab:person:institution-a.example.com:joe-a1" />
                         <option value="urn:collab:person:institution-a.example.com:" />
                         <option value="urn:collab:person:institution-b.example.com:" />
                         <option value="urn:collab:person:institution-c.example.com:" />

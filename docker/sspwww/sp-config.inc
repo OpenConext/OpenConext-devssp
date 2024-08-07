@@ -21,25 +21,28 @@ $gIDPmap = array(
     'https://gateway.dev.openconext.local/authentication/metadata' => array(
         'name' => 'OpenConext Stepup Gateway - gateway.dev.openconext.local',
         'loa' => array(
-            1 => 'http://dev.openconext.local/assurance/loa1',
-            2 => 'http://dev.openconext.local/assurance/loa2',
-            3 => 'http://dev.openconext.local/assurance/loa3',
+            "1" => 'http://dev.openconext.local/assurance/loa1',
+            "1.5" => 'http://dev.openconext.local/assurance/loa1.5',
+            "2" => 'http://dev.openconext.local/assurance/loa2',
+            "3" => 'http://dev.openconext.local/assurance/loa3',
         ),
     ),
     'https://gateway.dev.openconext.local/second-factor-only/metadata' => array(
         'name' => 'OpenConext Stepup Gateway - gateway.dev.openconext.local - SFO',
         'loa' => array(
-            1 => 'https://dev.openconext.local/assurance/sfo-level1', // Note does not exist
-            2 => 'https://dev.openconext.local/assurance/sfo-level2',
-            3 => 'https://dev.openconext.local/assurance/sfo-level3',
+            "1" => 'http://dev.openconext.local/assurance/sfo-level1', // Note does not exist
+            "1.5" => 'http://dev.openconext.local/assurance/sfo-level1', // Note does not exist
+            "2" => 'http://dev.openconext.local/assurance/sfo-level2',
+            "3" => 'http://dev.openconext.local/assurance/sfo-level3',
         ),
     ),
     'https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php' => array(
         'name' => 'Local SSP IdP - ssp.dev.openconext.local',
         'loa' => array(
-            1 => '',
-            2 => '',
-            3 => '',
+            "1" => '',
+            "1.5" => '',
+            "2" => '',
+            "3" => '',
         ),
     ),
 );
