@@ -303,7 +303,7 @@ if ( $bIsAuthenticated ) {
     /** @var $session SimpleSAML_Session */
     $requestedLOA = htmlentities($session->getData('string', 'RequiredAuthnContextClassRef') ?? '' );
     $IdPEntityID = htmlentities($as->getAuthData('saml:sp:IdP'));
-    $sessionIndex = htmlentities($as->getAuthData('saml:sp:SessionIndex'));
+    $sessionIndex = htmlentities($as->getAuthData('saml:sp:SessionIndex') ?? '');
     $authState = $session->getAuthState($sp);
     //echo "<pre>"; print_r($authState); echo "</pre>";
     $authenticationAuthority=$authState['saml:AuthenticatingAuthority'];    // Array of AuthenticatingAuthority's
