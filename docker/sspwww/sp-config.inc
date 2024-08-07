@@ -30,8 +30,8 @@ $gIDPmap = array(
     'https://gateway.dev.openconext.local/second-factor-only/metadata' => array(
         'name' => 'OpenConext Stepup Gateway - gateway.dev.openconext.local - SFO',
         'loa' => array(
-            "1" => 'http://dev.openconext.local/assurance/sfo-level1', // Note does not exist
-            "1.5" => 'http://dev.openconext.local/assurance/sfo-level1', // Note does not exist
+            "1" => '1', // level1 does not exist for SFO
+            "1.5" => 'http://dev.openconext.local/assurance/sfo-level1.5',
             "2" => 'http://dev.openconext.local/assurance/sfo-level2',
             "3" => 'http://dev.openconext.local/assurance/sfo-level3',
         ),
