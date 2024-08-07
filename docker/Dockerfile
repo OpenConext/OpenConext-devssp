@@ -5,10 +5,9 @@ FROM ghcr.io/openconext/openconext-basecontainers/php82-apache2-node20-composer2
 # https://github.com/OpenConext/OpenConext-BaseContainers/blob/main/php82-apache2/Dockerfile
 # Exposes PORT 80 for apache
 
-
 LABEL maintainer="pieter.vandermeulen@surf.nl"
 WORKDIR /var/www/simplesaml
-RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.1.1/simplesamlphp-2.1.1.tar.gz" | tar -xvz -C /var/www/simplesaml --strip-components=1
+RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.1.2/simplesamlphp-2.1.2.tar.gz" | tar -xvz -C /var/www/simplesaml --strip-components=1
 COPY ./modules/ /var/www/simplesaml/my-modules/
 COPY ./html/* /var/www/html
 COPY ./sspwww/* /var/www/simplesaml/public/ 
