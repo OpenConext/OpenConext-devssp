@@ -27,7 +27,7 @@ To run the devssp using the docker-compose.yaml from the OpenConext-devconf proj
   docker compose up
   ```
   
-- ./dev-rebuild.sh will rebuild the container and pull the latest base image
+- `./dev-rebuild.sh` will rebuild the container and pull the latest base image
 
 Both the ./dev-start.sh and ./dev-rebuild.sh scripts will copy the simplesaml directory from the contain to ./container-files on your hosts. This way you can use xdebug with the actual source files from the container by setting op a local path mapping in your IDE. 
 
