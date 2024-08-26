@@ -4,10 +4,10 @@ This repo contains all files that are needed to get a SimpleSAMLphp based SAML I
 
 This container is not in any way production ready! It is meant for development purposes only. 
 
-The container is used in the docker-compose of the OpenConect-devconf project
+The container is used in the docker-compose of the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project.
 
-# Docker-compose
-To run the devssp using the docker-compose.yaml from the OpenConext-devconf project:
+# Development
+When developing the OpenConect-devssp itself you can run devssp using the docker-compose.yaml in this OpenConext-devssp project:
 
 - Clone the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project on the same level as this project. I.e. the directory structure should look like this:
     ```
@@ -29,7 +29,7 @@ To run the devssp using the docker-compose.yaml from the OpenConext-devconf proj
   
 - `./dev-rebuild.sh` will rebuild the container and pull the latest base image
 
-Both the ./dev-start.sh and ./dev-rebuild.sh scripts will copy the simplesaml directory from the contain to ./container-files on your hosts. This way you can use xdebug with the actual source files from the container by setting op a local path mapping in your IDE. 
+Both the `./dev-start.sh` and `./dev-rebuild.sh` scripts will copy the simplesaml directory from the container to `./container-files` on your host. This way you can use xdebug with the actual source files from the container by setting op a local path mapping in your IDE.
 
 Then go to [https://ssp.dev.openconext.local/](https://ssp.dev.openconext.local/). The proxy uses a self-signed certificate, so you will need to accept this certificate in your browser.
 
