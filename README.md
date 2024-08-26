@@ -12,7 +12,7 @@ To run the devssp using the docker-compose.yaml from the OpenConext-devconf proj
 - Clone the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project on the same level as this project. I.e. the directory structure should look like this:
     ```
     .
-    ├── OpenConext-devssp
+    ├── OpenConext-devconf
     └── OpenConext-devssp
     ```
 - Ensure that ports 80 and 443 are available on the host
