@@ -1,120 +1,138 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>OpenConext SimpleSAMLphp test container - ssp.dev.openconext.local</title>
 </head>
 <body>
-<h2>OpenConext SimpleSAMLphp test container - ssp.dev.openconext.local</h2>
+    <h1>OpenConext SimpleSAMLphp test container - ssp.dev.openconext.local</h1>
 
-<h3>Service Provider</h3>
-<ul>
-    <li><a href="https://ssp.dev.openconext.local/simplesaml/sp.php">Test SP</a></li>
-</ul>
+    <ul>
+        <li><a href="#service-provider">Service Provider</a></li>
+        <li><a href="#saml-metadata">SAML Metadata</a></li>
+        <li><a href="#simplesamlphp">SimpleSAMLphp</a></li>
+        <li><a href="#test-accounts">Test accounts</a></li>
+        <li><a href="#attibute-authority">Attibute Authority</a></li>
+    </ul>
 
-<h3>SAML Metadata</h3>
-<ul>
-    <li>SAML 2.0 IdP Metadata: <a href="https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php"><code>https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php</code></a></li>
-    <li>SAML 2.0 SP Metadata - default-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/default-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/default-sp</code></a></li>
-    <li>SAML 2.0 SP Metadata - second-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/second-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/second-sp</code></a></li>
-    <li>SAML 2.0 SP Metadata - third-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/third-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/third-sp</code></a></li>
-    <li>SAML 2.0 SP Metadata - fourth-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/fourth-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/fourth-sp</code></a></li>
-</ul>
+    <h2 id="service-provider">Service Provider</h2>
+    <ul>
+        <li><a href="https://ssp.dev.openconext.local/simplesaml/sp.php">Test SP</a></li>
+    </ul>
 
-<h3>SimpleSAMLphp</h3>
-<ul>
-    <li><a href="https://ssp.dev.openconext.local/simplesaml/admin">SimpleSAMLphp installation page (password: <code>secret</code>)</a></li>    
-</ul>
+    <h2 id="saml-metadata">SAML Metadata</h2>
+    <ul>
+        <li>SAML 2.0 IdP Metadata: <a href="https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php"><code>https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php</code></a></li>
+        <li>SAML 2.0 SP Metadata - default-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/default-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/default-sp</code></a></li>
+        <li>SAML 2.0 SP Metadata - second-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/second-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/second-sp</code></a></li>
+        <li>SAML 2.0 SP Metadata - third-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/third-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/third-sp</code></a></li>
+        <li>SAML 2.0 SP Metadata - fourth-sp: <a href="https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/fourth-sp"><code>https://ssp.dev.openconext.local/simplesaml/module.php/saml/sp/metadata.php/fourth-sp</code></a></li>
+    </ul>
 
-<h3>Test accounts</h3>
+    <h2 id="simplesamlphp">SimpleSAMLphp</h2>
+    <ul>
+        <li><a href="https://ssp.dev.openconext.local/simplesaml/admin">SimpleSAMLphp installation page (password: <code>secret</code>)</a></li>
+    </ul>
 
-For all test accounts, the username is equal to the password. The account <code>admin</code> is intended as a pre-provisioned superuser account.
+    <h2 id="test-accounts">Test accounts</h2>
+    <p>
+        For all test accounts, the username (uid) is equal to the password.
+        The account <code>admin</code> is intended as a pre-provisioned superuser account.
+    </p>
 
-The other accounts are generated based on a pattern consisting of the parts:
-<ol>
-    <li>a <b>prefix</b> (username)</li>
-    <li>an <b>institution</b> (organisation) identifier</li>
-    <li>a <b>suffix</b> with an account number or role, these are meant as a mnemonic and do not change the behaviour of the account/</li>
-</ol>
+    <p>
+        The other accounts are generated based on a pattern consisting of the parts:
+    </p>
+    <ol>
+        <li>a <b>prefix</b> (username)</li>
+        <li>an <b>institution</b> (organisation) identifier</li>
+        <li>a <b>suffix</b> with an account number or role, these are meant as a mnemonic and do not change the behaviour of the account/</li>
+    </ol>
 
-<p>See below for the available prefixes, institutions and suffixes. A test account is created for each combination of prefix, institution and suffix.
-Pay attention to the hyphens in the suffixes, 1-5 do not have them, the other suffixes do.</p>
-<p>Examples: <code>joe-a1</code>, <code>jane-b2</code>, <code>user-d4</code>, <code>jane-a-raa</code>, <code>joe-e-ra</code>, <code>user-d-tiqr</code></p>
+    <p>
+        See below for the available prefixes, institutions and suffixes.
+        A test account is created for each combination of prefix, institution and suffix.
+        Pay attention to the hyphens in the suffixes, 1-5 do not have them, the other suffixes do.
+    </p>
+    <p>
+        Examples: <code>joe-a1</code>, <code>jane-b2</code>, <code>user-d4</code>, <code>jane-a-raa</code>, <code>joe-e-ra</code>, <code>user-d-tiqr</code>
+    </p>
 
-<h4>Prefixes</h4>
-<ul>
-    <li><code>user-</code></li>
-    <li><code>joe-</code></li>
-    <li><code>jane-</code></li>
-</ul>
+    <h3>Prefixes</h3>
+    <ul>
+        <li><code>user-</code></li>
+        <li><code>joe-</code></li>
+        <li><code>jane-</code></li>
+    </ul>
 
-<h4>Institutions</h4>
+    <h3>Institutions</h3>
+    <p>
+        Institutions are identified by a one-letter code, each institution has a schacHomeOrganisation.
+    </p>
+    <table>
+        <tr>
+            <th>Code</th>
+            <th>schacHomeOrganisation</th>
+        </tr>
+        <tr>
+            <td><code>a</code></td>
+            <td>institution-<b>a</b>.example.com</td>
+        </tr>
+        <tr>
+            <td><code>b</code></td>
+            <td>institution-<b>b</b>.example.com</td>
+        </tr>
+        <tr>
+            <td><code>c</code></td>
+            <td>institution-<b>c</b>.example.com</td>
+        </tr>
+        <tr>
+            <td><code>d</code></td>
+            <td>Institution-<b>D</b>.EXAMPLE.COM</td>
+        </tr>
+        <tr>
+            <td><code>e</code></td>
+            <td>institution-<b>e</b>.example.com</td>
+        </tr>
+        <tr>
+            <td><code>f</code></td>
+            <td>institution-<b>f</b>.example.com</td>
+        </tr>
+    </table>
 
-Institutions are identified by a one-letter code, each institution has a schacHomeOrganisation.
-<table>
-    <tr>
-        <th>Code</th>
-        <th>schacHomeOrganisation</th>
-    </tr>
-    <tr>
-        <td><code>a</code></td>
-        <td>institution-<b>a</b>.example.com</td>
-    </tr>
-    <tr>
-        <td><code>b</code></td>
-        <td>institution-<b>b</b>.example.com</td>
-    </tr>
-    <tr>
-        <td><code>c</code></td>
-        <td>institution-<b>c</b>.example.com</td>
-    </tr>
-    <tr>
-        <td><code>d</code></td>
-        <td>Institution-<b>D</b>.EXAMPLE.COM</td>
-    </tr>
-    <tr>
-        <td><code>e</code></td>
-        <td>institution-<b>e</b>.example.com</td>
-    </tr>
-    <tr>
-        <td><code>f</code></td>
-        <td>institution-<b>f</b>.example.com</td>
-    </tr>
-</table>
-
-<h4>Suffixes</h4>
-<table>
-    <tr>
-        <th>Suffix</th>
-        <th>Description</th>
-    </tr>
-    <tr>
-        <td><code>1</code>, <code>2</code>, ... <code>5</code></td>
-        <td>generic user accounts</td>
-    </tr>
-    <tr>
-        <td><code>-sms</code></td>
-        <td>User with an SMS token</td>
-    </tr>
-    <tr>
-        <td><code>-yk</code></td>
-        <td>User with a Yubikey token</td>
-    </tr>
-    <tr>
-        <td><code>-tiqr</code></td>
-        <td>User with a Tiqr token</td>
-    </tr>
-    <tr>
-        <td><code>-u2f</code></td>
-        <td>User with a U2F / FIDO / WebAuthn token</td>
-    </tr>
-    <tr>
-        <td><code>-ra</code></td>
-        <td>User with a registration authority role</td>
-    </tr>
-    <tr>
-        <td><code>-raa</code></td>
-        <td>User with a registration authority administrator role</td>
-    </tr>
-</table>
+    <h3>Suffixes</h3>
+    <table>
+        <tr>
+            <th>Suffix</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><code>1</code>, <code>2</code>, ... <code>5</code></td>
+            <td>generic user accounts</td>
+        </tr>
+        <tr>
+            <td><code>-sms</code></td>
+            <td>User with an SMS token</td>
+        </tr>
+        <tr>
+            <td><code>-yk</code></td>
+            <td>User with a Yubikey token</td>
+        </tr>
+        <tr>
+            <td><code>-tiqr</code></td>
+            <td>User with a Tiqr token</td>
+        </tr>
+        <tr>
+            <td><code>-u2f</code></td>
+            <td>User with a U2F / FIDO / WebAuthn token</td>
+        </tr>
+        <tr>
+            <td><code>-ra</code></td>
+            <td>User with a registration authority role</td>
+        </tr>
+        <tr>
+            <td><code>-raa</code></td>
+            <td>User with a registration authority administrator role</td>
+        </tr>
+    </table>
 
     <h2 id="attibute-authority">Attibute Authority</h2>
     <p>
