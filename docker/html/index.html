@@ -116,5 +116,19 @@ Institutions are identified by a one-letter code, each institution has a schacHo
     </tr>
 </table>
 
+    <h2 id="attibute-authority">Attibute Authority</h2>
+    <p>
+        Using the <a href="https://ssp.dev.openconext.local/simplesaml/aa.php">Attribute Authority</a> (AA),
+        you can add attributes to the test accounts.
+        The username (uid) is used to link the attributes from the AA to the accounts.
+    </p>
+    <p>
+        The attributes from the AA are added to the SAML Response.
+        If an account already has that attribute defined, the attribute from the AA will override the existing attribute.
+        If an attribute is set multiple times in the AA for a user, a multi-valued attribute is created.
+    </p>
+    <p>
+        The attributes that you configure in the AA are persisted on disk in /var/www/simplesaml/data/aa.json in the container.
+    </p>
 </body>
 </html>

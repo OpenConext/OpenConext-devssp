@@ -124,7 +124,54 @@ $subject_method2_authproc = array( // internal-collabPersonId
         'class' => 'core:AttributeMap',
         'Openconext_short_to_urn'
     ),
-); 
+);
+
+$attribute_authority_authproc=array(
+    // Apply attributes from the /var/www/simplesaml/data/aa.json file managed by the aa.php script, our "Attribute Authority"
+    // If a user is found in the aa.json file, the attributes set for that user will override the attributes from the authsource
+    // aa.json is a JSON file with an array of objects with the following structure:
+    // [ { "u": "user1", "a": "attr1", "v": "value1" }, ... ]
+    100 => array(   // We want to run this on the final attributes of the IdP
+        'class' => 'core:PHP',
+        // The current attributes are in $attributes
+        'code' => '
+            $aa_file = "/var/www/simplesaml/data/aa.json";
+            
+            if (isset($attributes["urn:mace:dir:attribute-def:uid"])) {
+                $uid = $attributes["urn:mace:dir:attribute-def:uid"][0]; // The uid to match
+                
+                // Load the attributes from the aa.json file                
+                $aa_attributes = [];
+                if (file_exists($aa_file)) {
+                    $aa_attributes = json_decode(file_get_contents($aa_file), true);
+                }
+                if (false === $aa_attributes) {
+                    // Ignore read and parse errors
+                    $aa_attributes = []; 
+                }
+                
+                //throw new Exception("In AA for $uid: " . print_r($aa_attributes, true));
+                
+                // Look for attributes for the user $uid in the aa.json file
+                $user_attributes = [];
+                foreach ($aa_attributes as $aa_attribute) {
+                    if ($aa_attribute["u"] == $uid) {
+                        // Found the user, add the attribute to the user_attributes
+                        // A user can have multiple attributes, and can have multiple values for an attribute
+                        if (!isset($user_attributes[$aa_attribute["a"]])) {
+                            $user_attributes[$aa_attribute["a"]] = [];
+                        }
+                        $user_attributes[$aa_attribute["a"]][] = $aa_attribute["v"];  
+                    }
+                }
+                
+                // Merge the user_attributes with the current attributes, attributes in user_attributes will override 
+                // the current attributes
+                $attributes = array_merge($attributes, $user_attributes);    
+            }          
+        ',
+    ),
+);
 
 
 $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array(
@@ -171,7 +218,7 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
     // The IdP proxy must pass the ID of the user to the Stepup-Gateway along with the attributes for the SP.    
 
     //'authproc' => $subject_method1_authproc,
-    'authproc' => $subject_method2_authproc,
+    'authproc' => array_merge($subject_method2_authproc, $attribute_authority_authproc),
 
     // Required because the eduPersonTargetedID is a "complex" attribute and not a simple string value.
     'attributeencodings' => array(

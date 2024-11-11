@@ -15,6 +15,9 @@ COPY ./sspconf/ /var/www/simplesaml/config/
 COPY ./sspattributemap/Openconext_short_to_urn.php /var/www/simplesaml/attributemap/
 COPY ./conf/000-default.conf /etc/apache2/sites-enabled/
 
+RUN mkdir -p /var/www/simplesaml/data
+RUN chown -R www-data:www-data /var/www/simplesaml/data
+
 # Install the debugsp module from local source code.
 # First add the local directory with the module's source code to the composer repositories.
 RUN composer config repositories.debugsp path /var/www/simplesaml/my-modules/debugsp
