@@ -141,7 +141,7 @@ function HTML_select($label, $id, $options, $value="", $info="")
     $info=htmlentities($info);
     if (strlen($info)>0)
         echo " title=\"{$info}\"";
-    echo ">{$label}</label><select name=\"{$id}\">";
+    echo ">{$label}</label><select id=\"{$id}\" name=\"{$id}\">";
     foreach ($options as $name => $display) {
         $name=htmlentities($name);
         $display=htmlentities($display);

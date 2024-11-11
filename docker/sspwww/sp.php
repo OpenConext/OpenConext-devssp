@@ -331,9 +331,9 @@ html;
     echo "<label>SimpleSAMLphp session expire:</label><code>{$expire}</code><br /></p>";
 
     echo "<h3>LOA</h3>";
-    echo "<div><label>Actual LOA is:</label><code>{$actualLOA}</code></div><br />";
+    echo "<div id='actual_loa'><label>Actual LOA is:</label><code>{$actualLOA}</code></div><br />";
     if (strlen($requestedLOA) > 0) {
-        echo "<div><label>Requested LOA was:</label><code>{$requestedLOA}</code></div><br />";
+        echo "<div id='requested_loa'><label>Requested LOA was:</label><code>{$requestedLOA}</code></div><br />";
     }
 
     echo "<h3>NameID</h3>\n";
@@ -398,7 +398,7 @@ HTML_select('Request LOA: ', 'loa',
 
 echo <<<html
                <p>
-                    <button class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
+                    <button id="login_2" class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
                </p>
                <h3>Advanced options</h3>
 html;
@@ -406,7 +406,7 @@ html;
                 if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'show' ) {
 echo <<<html
                 <p>
-                    <button type="submit" name="action" value="show">Update direct login link</button><br />
+                    <button id="update_login_link" type="submit" name="action" value="show">Update direct login link</button><br />
                 </p>
 html;
 
@@ -431,7 +431,7 @@ html;
                 else {
 echo <<<html
                 <p>
-                    <button type="submit" name="action" value="show">Show direct login link</button><br />
+                    <button id="show_login_link" type="submit" name="action" value="show">Show direct login link</button><br />
                 </p>
 html;
                 }
@@ -509,19 +509,22 @@ $forceAuthnChecked = isset($_REQUEST['forceauthn']) && $_REQUEST['forceauthn'] =
 
 echo <<<html
                <p>
-                    <label title="Specify up to two SP EntityIDs to put in RequesterID Scoping elements in the AuthnRequest. If left blank no elements are added.">Scoping (RequesterID) 1:</label><input type="text" name="requesterid" list="commonSPs" value="{$requesterid}" size="80" /><br />
+                    <label title="Specify up to two SP EntityIDs to put in RequesterID Scoping elements in the AuthnRequest. If left blank no elements are added.">Scoping (RequesterID) 1:</label>
+                    <input id="requesterid" type="text" name="requesterid" list="commonSPs" value="{$requesterid}" size="80" /><br />
 {$commonSPs_datalist}
                     <label>2:</label><input type="text" name="requesterid2" list="commonSPs" value="{$requesterid2}" size="80" /><br />
 {$commonSPs_datalist}
                </p>
                <p>
-                    <label title="Specify up to two IdP EntityIDs to put in IDPList Scoping elements in the AuthnRequest. If left blank no elements are added.">Scoping (IDPList) 1:</label><input type="text" name="scopingIDP" list="commonIDPs" value="{$scopingIDP}" size="80" /><br />
+                    <label title="Specify up to two IdP EntityIDs to put in IDPList Scoping elements in the AuthnRequest. If left blank no elements are added.">Scoping (IDPList) 1:</label>
+                    <input id="scoping_idp" type="text" name="scopingIDP" list="commonIDPs" value="{$scopingIDP}" size="80" /><br />
 {$commonIDPs_datalist}
                     <label>2:</label><input type="text" name="scopingIDP2" list="commonIDPs" value="{$scopingIDP2}" size="80" /><br />
 {$commonIDPs_datalist}
                </p>
                <p>
-                   <label title="Specify the value of a NameID to put in a Subject element in the AuthnRequest. If specified a NameID of type 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified' is added to the AuthnRequest.">Subject:</label><input type="text" name="subject" list="commonSubjects" value="{$subject}" size="80" />
+                   <label title="Specify the value of a NameID to put in a Subject element in the AuthnRequest. If specified a NameID of type 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified' is added to the AuthnRequest.">Subject:</label>
+                   <input id="subject" type="text" name="subject" list="commonSubjects" value="{$subject}" size="80" />
                    <datalist id="commonSubjects">
                         <option value="urn:collab:person:dev.openconext.local:admin" />
                         <option value="urn:collab:person:institution-a.example.com:jane-a1" />
@@ -536,10 +539,12 @@ echo <<<html
                    </datalist>
                </p>
                <p>
-                    <label title="If selected a ForceAuthn is set to true in the AuthnRequest.">Force authentication:</label><input type="checkbox" name="forceauthn" value="true" /><br />
+                    <label title="If selected a ForceAuthn is set to true in the AuthnRequest.">Force authentication:</label>
+                    <input id="forceauthn" type="checkbox" name="forceauthn" value="true" /><br />
                </p>
                <p>
-                   <label title="Optionally override the AssertionConsumerServiceURL to specify in the AuthnRequest. Leave blank to use the default ACS location ({$sspACSURL}...) that is generated by SimpleSAMLphp.">AssertionConsumerServiceURL:</label><input type="text" name="acsurl" list="acsurls" value="{$acsurl}" size="80" />
+                   <label title="Optionally override the AssertionConsumerServiceURL to specify in the AuthnRequest. Leave blank to use the default ACS location ({$sspACSURL}...) that is generated by SimpleSAMLphp.">AssertionConsumerServiceURL:</label>
+                   <input id="acsurl" type="text" name="acsurl" list="acsurls" value="{$acsurl}" size="80" />
                    <datalist id="acsurls">                        
                         <option value="{$sspACSURL}default-sp" />
                         <option value="{$sspDebugSPACSURL}default-sp" />
@@ -556,7 +561,7 @@ echo <<<html
                </p>
                 
                <p>
-                    <button class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
+                    <button id="login_3" class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
                </p>
         </form>
 html;
