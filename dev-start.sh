@@ -24,6 +24,8 @@ echo "Syncing the SSP installation directory to the host"
 docker compose exec -it ssp /scripts/sync.sh
 echo "Syncing done"
 
+echo "SSP is now available at https://ssp.dev.openconext.local/"
+
 # attach to the containers's log output
 docker compose logs -f
 
