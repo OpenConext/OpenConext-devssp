@@ -5,12 +5,14 @@
 <body>
     <h1>OpenConext SimpleSAMLphp test container - ssp.dev.openconext.local</h1>
 
+    Documentation index:
     <ul>
         <li><a href="#service-provider">Service Provider</a></li>
         <li><a href="#saml-metadata">SAML Metadata</a></li>
         <li><a href="#simplesamlphp">SimpleSAMLphp</a></li>
         <li><a href="#test-accounts">Test accounts</a></li>
         <li><a href="#attibute-authority">Attibute Authority</a></li>
+        <li><a href="#tools">Tools</a></li>
     </ul>
 
     <h2 id="service-provider">Service Provider</h2>
@@ -147,6 +149,16 @@
     </p>
     <p>
         The attributes that you configure in the AA are persisted on disk in /var/www/simplesaml/data/aa.json in the container.
+    </p>
+
+
+    <h2 id="tools">Tools</h2>
+
+    <h3>SAML HTTP-Redirect Binding Signature validation</h3>
+
+    <p>
+        The <a href="https://ssp.dev.openconext.local/simplesaml/tools.php">SAML HTTP-Redirect Binding Signature validation tool</a>
+        can be used to validate the signature of a SAML HTTP-Redirect Binding request and see why the validation fails.
     </p>
 </body>
 </html>
