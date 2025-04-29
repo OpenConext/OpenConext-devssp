@@ -227,6 +227,61 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
         }
     }
 
+    // SAML Extensions (email and SHO)
+    if ( ( isset($_REQUEST['email_extension']) && strlen($_REQUEST['email_extension']) > 0 ) ||
+        ( isset($_REQUEST['sho_extension']) && strlen($_REQUEST['sho_extension']) > 0 ) )
+    {
+        $attributes = array();  // Array of attribute name => attribute value
+        if ( isset($_REQUEST['email_extension']) && strlen($_REQUEST['email_extension']) > 0 ) {
+            $attributes['urn:mace:dir:attribute-def:mail'] = $_REQUEST['email_extension'];
+        }
+        if ( isset($_REQUEST['sho_extension']) && strlen($_REQUEST['sho_extension']) > 0 ) {
+            $attributes['urn:mace:terena.org:attribute-def:schacHomeOrganization'] = $_REQUEST['sho_extension'];
+        }
+
+        // A DOMDocument to hold the DOM structure and to serve as a factory object for DOMElements
+        // This is the method used in the Stepup-saml-bundle:
+        // https://github.com/OpenConext/Stepup-saml-bundle/blob/main/src/SAML2/Extensions/GsspUserAttributesChunk.php
+        // I'm not sure why this method is used over using new DOMElement() directly, and not using a DOMDocument at all
+        $dom = new DOMDocument('1.0', 'UTF-8');
+
+        // Create the UserAttributes extension element
+        $userAttributes = $dom->createElementNS('urn:mace:surf.nl:stepup:gssp-extensions', 'gssp:UserAttributes');
+        $userAttributes->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        $userAttributes->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xs', 'http://www.w3.org/2001/XMLSchema');
+
+        // Add the attributes to the extension
+        foreach ($attributes as $attributeName => $attributeValue) {
+            // Create the saml:Attribute element
+            $attribute = $dom->createElementNS('urn:oasis:names:tc:SAML:2.0:assertion', 'saml:Attribute');
+            $attribute->setAttribute('NameFormat', 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri');
+            $attribute->setAttribute('Name', $attributeName);
+
+            // Create the saml:AttributeValue element
+            $attributeValue = $dom->createElementNS('urn:oasis:names:tc:SAML:2.0:assertion', 'saml:AttributeValue', $attributeValue);
+            $attributeValue->setAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'xsi:type', 'xs:string');
+
+            // Append the saml:AttributeValue to saml:Attribute
+            $attribute->appendChild($attributeValue);
+
+            // Append the saml:Attribute to gssp:UserAttributes
+            $userAttributes->appendChild($attribute);
+        }
+
+        // Append the root element to the document
+        $dom->appendChild($userAttributes);
+
+        // Create a Chunk from the gssp:UserAttributes DOMElement
+        $userAttributesChunk = new \SAML2\XML\Chunk($userAttributes);
+
+        // Add the gssp:UserAttributes to the SAML request
+        // The SAML2 library uses the 'saml:Extensions' element to hold the extensions which is an array of
+        // SAML2\XML\Chunk objects, one for each extension to add.
+        // The SSP will then add the extensions to the SAML request by calling setExtensions(array $extensions) : void
+        // on the SAML2\AuthnRequest object with the array of Chunk objects.
+        $context['saml:Extensions'] = array($userAttributesChunk);
+    }
+
     // login
     $as->login( $context );
 
@@ -263,6 +318,8 @@ $nameidpolicy=htmlentities(isset($_REQUEST['nameidpolicy']) ? $_REQUEST['nameidp
 $ssobinding=htmlentities(isset($_REQUEST['ssobinding']) ? $_REQUEST['ssobinding'] : "");
 $requesterid=htmlentities(isset($_REQUEST['requesterid']) ? $_REQUEST['requesterid'] : "");
 $requesterid2=htmlentities(isset($_REQUEST['requesterid2']) ? $_REQUEST['requesterid2'] : "");
+$email_extension=htmlentities(isset($_REQUEST['email_extension']) ? $_REQUEST['email_extension'] : "");
+$sho_extension=htmlentities(isset($_REQUEST['sho_extension']) ? $_REQUEST['sho_extension'] : "");
 $scopingIDP=htmlentities(isset($_REQUEST['scopingIDP']) ? $_REQUEST['scopingIDP'] : "");
 $scopingIDP2=htmlentities(isset($_REQUEST['scopingIDP2']) ? $_REQUEST['scopingIDP2'] : "");
 $sp=htmlentities(isset($_REQUEST['sp']) ? $_REQUEST['sp'] : "default-sp");
@@ -560,6 +617,21 @@ echo <<<html
                    <label title="If selected two extra POST variables 'AuthMethod' and 'Context' are added to the AuthnRequest and the HTTP-POST binding is used. Note: Request LOA and Subject should be specified as well to make vailid SFO request to the Stepup-Gateway">Emulate SFO ADFS extension:</label><input type="checkbox" name="emulateadfs" value="true"{$emulateADFSchecked} /><br />
                </p>
                 
+                <p>
+                    <label title="Specify an email address. If left blank the email extension is not added.">Email Userinfo extension:</label>
+                    <input id="email_extension" type="text" name="email_extension" value="{$email_extension}" size="80" /><br />
+                    <label title="Specify a domain. If left blank the schacHomeOranization extension is not added.">SHO Userinfo extension:</label>
+                    <input id="sho_extension" type="text" name="sho_extension" list="commonSHOs" value="{$sho_extension}" size="80" /><br />
+                    <datalist id="commonSHOs">
+                        <option value="institution-a.example.com" />
+                        <option value="institution-b.example.com" />
+                        <option value="institution-c.example.com" />
+                        <option value="institution-d.example.com" />
+                        <option value="Institution-D.EXAMPLE.COM" />
+                        <option value="institution-e.example.com" />
+                        <option value="institution-f.example.com" />
+                   </datalist>
+               </p>
                <p>
                     <button id="login_3" class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
                </p>
