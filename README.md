@@ -33,11 +33,20 @@ When developing the OpenConect-devssp itself you can run devssp using the docker
 
 Then go to [https://ssp.dev.openconext.local/](https://ssp.dev.openconext.local/).
 The proxy uses a self-signed certificate, so you will need to accept this certificate in your browser.
+
+## dev-start.sh
   
-- `./dev-rebuild.sh` will rebuild the container and pull the latest base image
+You can use the `./dev-start.sh` script to start the containers in the background.
+Ths script will copy the contents of the `/var/www` directory in the container to the `container/var/www` directory on 
+the host each time the container is started so that source debugging of these files is possible
+from the IDE.
 
-Both the `./dev-start.sh` and `./dev-rebuild.sh` scripts will copy the simplesaml directory from the container to `./container-files` on your host. This way you can use xdebug with the actual source files from the container by setting op a local path mapping in your IDE.
+With the `-r` option you can force a rebuild of the containers.
+```bash
+  ./dev-start.sh -r
+```
 
-Then go to [https://ssp.dev.openconext.local/](https://ssp.dev.openconext.local/). The proxy uses a self-signed certificate, so you will need to accept this certificate in your browser.
+## Debugging
+The container has XDebug installed and configured.
 
 
