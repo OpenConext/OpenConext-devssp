@@ -1,15 +1,19 @@
 # OpenConect-devssp
 
-This repo contains all files that are needed to get a SimpleSAMLphp based SAML IdP and SP running in a docker container with a configuration that can be used to test OpenConext-Stepup.
+This repo contains all files that are needed to get a SimpleSAMLphp based SAML IdP and SP running in a docker container 
+with a configuration that can be used to test OpenConext-Stepup.
 
-This container is not in any way production ready! It is meant for development purposes only. 
+This image is not in any way production ready! It is meant for development and testing purposes only. 
 
-The container is used in the docker-compose of the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project.
+This image is used in the docker-compose of the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project.
 
 # Development
+
+## Setup
 When developing the OpenConect-devssp itself you can run devssp using the docker-compose.yaml in this OpenConext-devssp project:
 
-- Clone the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project on the same level as this project. I.e. the directory structure should look like this:
+- Clone the [OpenConext-devconf](https://github.com/OpenConext/OpenConext-devconf) project on the same level as this project. 
+- I.e. the directory structure should look like this:
     ```
     .
     ├── OpenConext-devconf
@@ -26,6 +30,9 @@ When developing the OpenConect-devssp itself you can run devssp using the docker
   ```bash
   docker compose up
   ```
+
+Then go to [https://ssp.dev.openconext.local/](https://ssp.dev.openconext.local/).
+The proxy uses a self-signed certificate, so you will need to accept this certificate in your browser.
   
 - `./dev-rebuild.sh` will rebuild the container and pull the latest base image
 
