@@ -22,15 +22,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Create version tag
-        id: version
+        id: set_version
         run: |
           # Get the tag that triggered the workflow if it exists
           # If no tag exists, use the commit hash as the version
-            if [ -n "${GITHUB_TAG}" ]; then
-                echo "version=${GITHUB_TAG}" >> $GITHUB_OUTPUT
-            else
-                echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-            fi
+          if [ -n "${GITHUB_TAG}" ]; then
+              echo "version=${GITHUB_TAG}" >> $GITHUB_OUTPUT
+          else
+              echo "version=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -48,5 +49,5 @@ jobs:
           tags: |
             ghcr.io/openconext/openconext-devssp/devssp:latest
             ghcr.io/openconext/openconext-devssp/devssp:${{ github.sha }}
-            org.opencontainers.image.created: ${{ github.event.created_at }}
-            org.opencontainers.image.version: ${{ version.output.version }}
+            org.opencontainers.image.created: ${{ github.event.created_at }}            
+            org.opencontainers.image.version: ${{ steps.set_version.outputs.version }}
