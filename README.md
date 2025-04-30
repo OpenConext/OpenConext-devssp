@@ -49,4 +49,16 @@ With the `-r` option you can force a rebuild of the containers.
 ## Debugging
 The container has XDebug installed and configured.
 
+### PhpStorm
 
+The easiest way to develop and debug using PhpStorm is to use the remote interpreter feature:
+1. Go to `Settings` > `PHP` > `CLI Interpreter`
+2. Add a new Docker Compose interpreter
+3. If you have not already done so, add the Docker Server you are using under Server
+4. Configuration file is the `docker-compose.yaml` file in the root of this project
+5. Service is `ssp`
+6. Choose to connect to the existing container
+
+To trace though e.g. the simplesaml php code, start the container with the dev-start.sh script. 
+This copies the contents of the /var/www directory in the container to the container/var/www directory on the host.
+Then you can map e.g. the container/var/www/simplesaml/src to the remote /var/www/simplesaml/src directory in PhpStorm.
