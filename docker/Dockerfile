@@ -7,7 +7,9 @@ FROM ghcr.io/openconext/openconext-basecontainers/php82-apache2-node20-composer2
 
 LABEL maintainer="pieter.vandermeulen@surf.nl"
 WORKDIR /var/www/simplesaml
-RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.1.2/simplesamlphp-2.1.2.tar.gz" | tar -xvz -C /var/www/simplesaml --strip-components=1
+# Install SimpleSAMLphp from the project's release tarball
+RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.4.0/simplesamlphp-2.4.0-full.tar.gz" \
+    | tar -xvz -C /var/www/simplesaml --strip-components=1
 COPY ./modules/ /var/www/simplesaml/my-modules/
 COPY ./html/* /var/www/html
 COPY ./sspwww/* /var/www/simplesaml/public/ 
@@ -23,4 +25,4 @@ RUN chown -R www-data:www-data /var/www/simplesaml/data
 RUN composer config repositories.debugsp path /var/www/simplesaml/my-modules/debugsp
 
 # Use composer to install the module so that the simplesamlphp/composer-module-installer can do its thing.
-RUN COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_MIRROR_PATH_REPOS=1 composer require pmeulen/simplesamlphp-module-debugsp:dev-main
+RUN COMPOSER_ALLOW_SUPERUSER=1 COMPOSER_MIRROR_PATH_REPOS=1 composer require pmeulen/simplesamlphp-module-debugsp:dev-main --ignore-platform-req=ext-ldap
