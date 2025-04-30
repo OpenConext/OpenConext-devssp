@@ -48,5 +48,5 @@ jobs:
           tags: |
             ghcr.io/openconext/openconext-devssp/devssp:latest
             ghcr.io/openconext/openconext-devssp/devssp:${{ github.sha }}
-            org.opencontainers.image.created: ${{ events.created_at }}
+            org.opencontainers.image.created: ${{ github.event.created_at }}
             org.opencontainers.image.version: ${{ version.version }}
