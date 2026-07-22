@@ -227,6 +227,9 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
         }
     }
 
+    // SAML Extensions
+    $extensionChunks = array();
+
     // SAML Extensions (email and SHO)
     if ( ( isset($_REQUEST['email_extension']) && strlen($_REQUEST['email_extension']) > 0 ) ||
         ( isset($_REQUEST['sho_extension']) && strlen($_REQUEST['sho_extension']) > 0 ) )
@@ -274,12 +277,32 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
         // Create a Chunk from the gssp:UserAttributes DOMElement
         $userAttributesChunk = new \SAML2\XML\Chunk($userAttributes);
 
-        // Add the gssp:UserAttributes to the SAML request
-        // The SAML2 library uses the 'saml:Extensions' element to hold the extensions which is an array of
-        // SAML2\XML\Chunk objects, one for each extension to add.
-        // The SSP will then add the extensions to the SAML request by calling setExtensions(array $extensions) : void
-        // on the SAML2\AuthnRequest object with the array of Chunk objects.
-        $context['saml:Extensions'] = array($userAttributesChunk);
+        // Collect the gssp:UserAttributes chunk
+        $extensionChunks[] = $userAttributesChunk;
+    }
+
+    // mdui:UIInfo extension with a mdui:DisplayName (service name), as sent by e.g. OpenConext
+    // EngineBlock when initiating a Stepup callout. The Stepup-Gateway can read the DisplayName
+    // and forward it to the GSSP so the GSSP can show which service the user is authenticating for.
+    if ( isset($_REQUEST['mdui_displayname']) && strlen($_REQUEST['mdui_displayname']) > 0 )
+    {
+        $mduiDom = new DOMDocument('1.0', 'UTF-8');
+        $uiInfo = $mduiDom->createElementNS('urn:oasis:names:tc:SAML:metadata:ui', 'mdui:UIInfo');
+        $displayName = $mduiDom->createElementNS('urn:oasis:names:tc:SAML:metadata:ui', 'mdui:DisplayName');
+        $displayName->setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang', 'en');
+        $displayName->textContent = $_REQUEST['mdui_displayname'];
+        $uiInfo->appendChild($displayName);
+        $mduiDom->appendChild($uiInfo);
+        $extensionChunks[] = new \SAML2\XML\Chunk($uiInfo);
+    }
+
+    // Add the collected extensions to the SAML request
+    // The SAML2 library uses the 'saml:Extensions' element to hold the extensions which is an array of
+    // SAML2\XML\Chunk objects, one for each extension to add.
+    // The SSP will then add the extensions to the SAML request by calling setExtensions(array $extensions) : void
+    // on the SAML2\AuthnRequest object with the array of Chunk objects.
+    if ( count($extensionChunks) > 0 ) {
+        $context['saml:Extensions'] = $extensionChunks;
     }
 
     // login
@@ -320,6 +343,7 @@ $requesterid=htmlentities(isset($_REQUEST['requesterid']) ? $_REQUEST['requester
 $requesterid2=htmlentities(isset($_REQUEST['requesterid2']) ? $_REQUEST['requesterid2'] : "");
 $email_extension=htmlentities(isset($_REQUEST['email_extension']) ? $_REQUEST['email_extension'] : "");
 $sho_extension=htmlentities(isset($_REQUEST['sho_extension']) ? $_REQUEST['sho_extension'] : "");
+$mdui_displayname=htmlentities(isset($_REQUEST['mdui_displayname']) ? $_REQUEST['mdui_displayname'] : "");
 $scopingIDP=htmlentities(isset($_REQUEST['scopingIDP']) ? $_REQUEST['scopingIDP'] : "");
 $scopingIDP2=htmlentities(isset($_REQUEST['scopingIDP2']) ? $_REQUEST['scopingIDP2'] : "");
 $sp=htmlentities(isset($_REQUEST['sp']) ? $_REQUEST['sp'] : "default-sp");
@@ -622,6 +646,8 @@ echo <<<html
                     <input id="email_extension" type="text" name="email_extension" value="{$email_extension}" size="80" /><br />
                     <label title="Specify a domain. If left blank the schacHomeOranization extension is not added.">SHO Userinfo extension:</label>
                     <input id="sho_extension" type="text" name="sho_extension" list="commonSHOs" value="{$sho_extension}" size="80" /><br />
+                    <label title="Specify a service name. If left blank the mdui:UIInfo extension is not added.">Service name (mdui:DisplayName) extension:</label>
+                    <input id="mdui_displayname" type="text" name="mdui_displayname" value="{$mdui_displayname}" size="80" /><br />
                     <datalist id="commonSHOs">
                         <option value="institution-a.example.com" />
                         <option value="institution-b.example.com" />
