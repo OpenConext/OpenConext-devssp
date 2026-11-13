@@ -6,6 +6,20 @@
 
 $httpUtils = new \SimpleSAML\Utils\HTTP();
 
+/*
+ * The EntraID mock IdP (see metadata/saml20-idp-hosted.php) is served under a second
+ * base path (/entra-mock/) on the same host (see the Alias in conf/000-default.conf).
+ * Select the base URL path based on the requested URL, so that SimpleSAMLphp generates
+ * correct URLs for both base paths. SimpleSAMLphp picks the hosted IdP for a request
+ * based on this host/path combination (the 'host' key in saml20-idp-hosted.php).
+ */
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+if ($requestUri === '/entra-mock' || str_starts_with($requestUri, '/entra-mock/')) {
+    $baseurlpath = 'https://ssp.dev.openconext.local/entra-mock/';
+} else {
+    $baseurlpath = 'https://ssp.dev.openconext.local/simplesaml/';
+}
+
 $config = [
 
     /*******************************
@@ -32,7 +46,9 @@ $config = [
      * reverse proxy).
      */
     //'baseurlpath' => 'simplesaml/',
-    'baseurlpath' => 'https://ssp.dev.openconext.local/simplesaml/',    
+    // See the $baseurlpath computation above: /entra-mock/ for the EntraID mock IdP,
+    // /simplesaml/ for everything else.
+    'baseurlpath' => $baseurlpath,
 
     /*
      * The 'application' configuration array groups a set configuration options

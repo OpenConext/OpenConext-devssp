@@ -227,3 +227,145 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 
 );
 
+
+////////////////////////////////////////////////////////////////////////////////
+// The "EntraID mock" IdP.
+//
+// This second hosted IdP emulates an EntraID (AzureAD) IdP for the Stepup-AzureMFA GSSP
+// It is served under a second base path (/entra-mock/) under the same hostname.
+//
+// Properties:
+// - No SSO: the IdP uses its own authsource ('entra-mock-userpass', see authsources.php),
+//   and the AzureMFA SP is configured with ForceAuthn in saml20-sp-remote.php, so every
+//   AuthnRequest at this IdP results in its login page.
+// - No Subject handling is required: EntraID-style AuthnRequests (institutions with
+//   is_azure_ad: true) carry no Subject at all and SimpleSAMLphp does not need one.
+//   ADFS-style AuthnRequests that do carry a Subject are simply ignored.
+// - AuthnRequests from the AzureMFA SP are signed; a valid signature is required and is
+//   validated against the certificate configured for that SP in saml20-sp-remote.php.
+// - Assertions are signed with entra-mock-idp.key; AzureMFA validates them against
+//   entra-mock-idp.crt. These key/cert files are not part of this repository, they are
+//   provided in the cert dir (mounted from OpenConext-devconf/stepup/ssp in devconf).
+//
+// The institutions.yaml of the AzureMFA service in OpenConext-devconf should point to:
+//   entity_id:    https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php
+//   sso_location: https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService
+//   certificates: [ entra-mock-idp.crt ]
+//   is_azure_ad:  true
+
+$entra_mock_authproc = array(
+
+    // Generate an unspecified NameID for use by this IdP, using the value of the "NameID"
+    // attribute from the authsource as the NameID in the Subject of the SAML Assertion
+    1 => array(
+        'class' => 'saml:AttributeNameID',
+        'attribute' => 'NameID',
+        'identifyingAttribute' => 'NameID',
+        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+
+        // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
+        'NameQualifier' => FALSE,
+        'SPNameQualifier' => FALSE,
+    ),
+
+    // Simulate a user cancelling the authentication at the (mock) EntraID (the "cancel"
+    // account): send a SAML error response (Responder / AuthnFailed) to the SP (AzureMFA),
+    // using the same responder SimpleSAMLphp uses for authentication errors. (A plain
+    // "throw" would not work here: with ForceAuthn the authproc runs after the login
+    // completed, where an exception would only result in an error page, not a SAML response.)
+    2 => array(
+        'class' => 'core:PHP',
+        'code' => '
+            if (isset($attributes["uid"][0]) && $attributes["uid"][0] === "cancel") {
+                \SimpleSAML\Module\saml\IdP\SAML2::handleAuthError(
+                    new \SimpleSAML\Module\saml\Error(
+                        \SAML2\Constants::STATUS_RESPONDER,
+                        \SAML2\Constants::STATUS_AUTHN_FAILED,
+                        "Authentication cancelled by user"
+                    ),
+                    $state
+                );
+            }
+        ',
+    ),
+
+    // Remove the NameID attribute from the attributes, so that it is not released as an
+    // attribute (it would be renamed to internal-collabPersonId by the AttributeMap below)
+    5 => array(
+        'class' => 'core:AttributeAlter',
+        'subject' => 'NameID',
+        'pattern' => '/.*/',
+        '%remove',
+    ),
+
+    // AzureMFA validates that the mail attribute in the response contains the email
+    // address the user registered with. Use the email address generated for the account
+    // (eduPersonPrincipalName, i.e. uid@schacHomeOrganization), e.g. jane-a1@institution-a.example.com
+    7 => array(
+        'class' => 'core:PHP',
+        'code' => '
+            if (isset($attributes["eduPersonPrincipalName"][0])) {
+                $attributes["mail"] = array($attributes["eduPersonPrincipalName"][0]);
+            }
+        ',
+    ),
+
+    // Convert "short" attribute names (uid, mail, ...) to their long urn:mace... equivalent.
+    // The map is defined in sspattributemap/Openconext_short_to_urn.php
+    10 => array(
+        'class' => 'core:AttributeMap',
+        'Openconext_short_to_urn'
+    ),
+
+    // EntraID marks an MFA authentication with this attribute; AzureMFA requires it in the
+    // response for institutions with is_azure_ad: true
+    20 => array(
+        'class' => 'core:AttributeAdd',
+        'http://schemas.microsoft.com/claims/authnmethodsreferences' => array('http://schemas.microsoft.com/claims/multipleauthn'),
+    ),
+);
+
+$metadata['https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'] = array(
+    // Select this IdP for requests under the /entra-mock/ base path (host + path)
+    'host' => 'ssp.dev.openconext.local/entra-mock',
+
+    // Set the endpoints explicitly: 'host' contains a path, so the auto-generated
+    // endpoints would end up with the path twice
+    'SingleSignOnService' => 'https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService',
+    'SingleSignOnServiceBinding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+    'SingleLogoutService' => 'https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleLogout',
+    'SingleLogoutServiceBinding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+
+    'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+
+    /* X.509 key and certificate of the mock IdP. Relative to the cert directory.
+     * These files are not part of this repository; they are provided in the cert dir
+     * (mounted from OpenConext-devconf/stepup/ssp in the devconf setup).
+     */
+    'privatekey' => 'entra-mock-idp.key',
+    'certificate' => 'entra-mock-idp.crt',
+
+    // Dedicated authsource: no SSO with the main IdP (see authsources.php)
+    'auth' => 'entra-mock-userpass',
+
+    // The AzureMFA SP signs its AuthnRequests; require and validate the signature
+    'redirect.validate' => TRUE,
+    'validate.authnrequest' => TRUE,
+
+    // Sign the assertion (AzureMFA validates the assertion signature), not the response
+    'saml20.sign.response' => FALSE,
+    'saml20.sign.assertion' => TRUE,
+
+    // No artifact binding support
+    'saml20.sendartifact' => FALSE,
+
+    'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
+
+    // Use an unspecified NameID. The NameID is generated in the authproc above.
+    // This is the NameID that will be put in the Subject of the SAML Assertion
+    'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+
+    'authproc' => array_merge($entra_mock_authproc, $attribute_authority_authproc),
+
+);
+

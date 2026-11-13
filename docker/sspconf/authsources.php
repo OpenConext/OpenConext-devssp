@@ -192,3 +192,29 @@ foreach ($accounts as $user => $email) {
     account_gen($config, "{$user}-e", $email, 'Institution-e.example.com', $slugs);
     account_gen($config, "{$user}-f", $email, 'Institution-f.example.com', $slugs);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Authentication source for the EntraID mock IdP (see saml20-idp-hosted.php).
+//
+// It uses the same accounts as 'example-userpass' (generated above), so a test account
+// like "jane-a1" can also authenticate at the mock IdP with the same username, using the
+// email address that was generated for that account.
+//
+// The authsource has its own id ('entra-mock-userpass'), so a session at the main IdP
+// ('example-userpass') is never reused at the mock IdP: no SSO between the two IdPs.
+//
+// The special account "cancel" simulates a user cancelling the authentication at the
+// (mock) EntraID: the authproc of the mock IdP returns a SAML error response
+// (Responder / AuthnFailed) to the SP for it.
+
+// Copy the accounts, but remove the 'exampleauth:UserPass' class entry (numeric key 0)
+$entra_mock_accounts = $config['example-userpass'];
+unset($entra_mock_accounts[0]);
+$entra_mock_accounts['cancel:cancel'] = array(
+    'NameID' => 'urn:collab:person:entra-mock.dev.openconext.local:cancel',
+    'uid' => array('cancel'),
+    'mail' => 'cancel@dev.openconext.local',
+    'eduPersonPrincipalName' => 'cancel@dev.openconext.local',
+    'schacHomeOrganization' => 'dev.openconext.local',
+);
+$config['entra-mock-userpass'] = array_merge(array('exampleauth:UserPass'), $entra_mock_accounts);

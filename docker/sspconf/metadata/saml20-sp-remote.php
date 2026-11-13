@@ -58,5 +58,34 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
                     'index' => 0,
                 ),
         ),
-    'certificate' => 'gateway_sp.crt' 
+    'certificate' => 'gateway_sp.crt'
+);
+
+
+///////////////////////////////////////////////////////////////////////////////////
+// The Stepup-AzureMFA service in its SP role towards the EntraID mock IdP hosted by
+// this instance (https://ssp.dev.openconext.local/entra-mock/..., see saml20-idp-hosted.php).
+// This allows the (production image of the) AzureMFA GSSP to authenticate users at the
+// mock EntraID IdP.
+//
+// - The AuthnRequests sent by AzureMFA are signed with its SP key; the signature is
+//   required at the mock IdP (validate.authnrequest) and validated against this certificate.
+//   The certificate file is not part of this repository; it is provided in the cert dir
+//   (mounted from OpenConext-devconf/stepup/azuremfa in the devconf setup).
+// - ForceAuthn is set so that no SSO session is ever reused for AuthnRequests from
+//   AzureMFA at the mock IdP: every AuthnRequest results in the login page of the mock IdP.
+
+$metadata['https://azuremfa.dev.openconext.local/saml/metadata'] = array(
+    'entityid' => 'https://azuremfa.dev.openconext.local/saml/metadata',
+    'AssertionConsumerService' =>
+        array (
+            0 =>
+                array (
+                    'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+                    'Location' => 'https://azuremfa.dev.openconext.local/saml/acs',
+                    'index' => 0,
+                ),
+        ),
+    'certificate' => 'azuremfa_idp.crt',
+    'ForceAuthn' => TRUE,
 );
