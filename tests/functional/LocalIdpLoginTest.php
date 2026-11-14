@@ -189,7 +189,7 @@ final class LocalIdpLoginTest extends FunctionalTestCase
         $this->browser->submit($this->browser->get(self::SP_PATH)->filter('form#logout button[value="logout"]')->form());
         $page = $this->browser->settle();
 
-        self::assertStringContainsString('You are not logged in', $page->text(), $this->browser->trail());
+        self::assertSame('default-sp', self::labelValue($page, 'You are not logged in to SP:'), $this->browser->trail());
         self::assertCount(0, $page->filter('form#logout'));
 
         // The local IdP has no SingleLogoutService in saml20-idp-remote.php, so the SP logs out locally only
@@ -199,6 +199,23 @@ final class LocalIdpLoginTest extends FunctionalTestCase
         $page = $this->loginViaSp(['idp' => self::LOCAL_IDP], 'jane-a1');
         $this->assertLoggedIn($page, 'default-sp', self::LOCAL_IDP);
         self::assertSame(1, $this->browser->logins());
+    }
+
+    /** Logout works on the SP of the page (?sp=...), not on the SP selected in the login form */
+    public function testLogoutOfPageSp(): void
+    {
+        $page = $this->loginViaSp(['idp' => self::LOCAL_IDP, 'sp' => 'second-sp'], 'jane-a1');
+        $this->assertLoggedIn($page, 'second-sp', self::LOCAL_IDP);
+
+        $form = $page->filter('form#logout button[value="logout"]')->form();
+        self::assertStringContainsString('second-sp', $page->filter('form#logout button[value="logout"]')->attr('title'));
+        $this->browser->submit($form);
+        $page = $this->browser->settle();
+
+        self::assertStringEndsWith(self::SP_PATH . '?sp=second-sp', strtok($this->browser->currentUrl(), '#'), $this->browser->trail());
+        self::assertSame('second-sp', self::labelValue($page, 'You are not logged in to SP:'), $this->browser->trail());
+        // The login form still has the SP of the last login
+        self::assertSame('second-sp', $page->filter('select[name="sp"] option[selected]')->attr('value'));
     }
 
     public function testLoginUsingHttpPostBinding(): void

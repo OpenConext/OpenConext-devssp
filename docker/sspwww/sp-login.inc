@@ -17,54 +17,30 @@
  *                                      this SP requests the IdP to use for sending back the SAML Response to us)
  * * $GLOBALS['gSP_SSOBinding'] -- The binding to use for sending the authentication request to the IdP
  *
- * Unknown values fall back to the defaults: signing with rsa-sha256, the default key and the HTTP-Redirect binding.
+ * @param array $params The parameters of the login form, normalised by normaliseParams()
  */
 function applySpGlobals(array $params): void
 {
-    $algorithms = array(
-        'none' => '',
-        'rsa-sha1' => 'http://www.w3.org/2000/09/xmldsig#rsa-sha1',
-        'rsa-sha256' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
-        'rsa-sha384' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384',
-        'rsa-sha512' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512',
-    );
-    $signing = $params['signing'] ?? 'rsa-sha256';
-    if (!isset($algorithms[$signing])) {
-        $signing = 'rsa-sha256';
-    }
-    $GLOBALS['gSP_redirect_sign'] = $signing !== 'none';
-    $GLOBALS['gSP_signature_algorithm'] = $algorithms[$signing];
-
-    $GLOBALS['gSP_secondary_key'] = ($params['key'] ?? '') === 'secondary';
-
-    $GLOBALS['gSP_ProtocolBinding'] = 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST';
-
-    $bindings = array(
-        'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-        'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
-    );
-    $ssoBinding = $params['ssobinding'] ?? '';
+    $GLOBALS['gSP_signature_algorithm'] = SP_SIGNING_ALGORITHMS[$params['signing']];
+    $GLOBALS['gSP_redirect_sign'] = $GLOBALS['gSP_signature_algorithm'] !== '';
+    $GLOBALS['gSP_secondary_key'] = $params['key'] === 'secondary';
+    $GLOBALS['gSP_ProtocolBinding'] = SP_BINDING_POST;
     // The SURF MFA extension for ADFS posts its request (see buildLoginContext())
-    if (($params['emulateadfs'] ?? '') === 'true') {
-        $ssoBinding = 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST';
-    }
-    $GLOBALS['gSP_SSOBinding'] = in_array($ssoBinding, $bindings, true)
-        ? $ssoBinding
-        : 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect';
+    $GLOBALS['gSP_SSOBinding'] = $params['emulateadfs'] === 'true' ? SP_BINDING_POST : $params['ssobinding'];
 }
 
 
-/** Whether a (string) request parameter is set and not empty */
+/** Whether a form field has a value */
 function paramIsSet(array $params, string $name): bool
 {
-    return isset($params[$name]) && strlen($params[$name]) > 0;
+    return ($params[$name] ?? '') !== '';
 }
 
 
 /**
  * Build the state array for SimpleSAML\Auth\Simple::login() from the parameters of the login form
  *
- * @param array $params The parameters of the login form
+ * @param array $params The parameters of the login form, normalised by normaliseParams()
  * @param array $idpMap $gIDPmap from sp-config.inc
  * @param string $returnURL Where SimpleSAMLphp sends the browser after the login
  * @param string $sp The authsource (i.e. the SP) that is used for the login
@@ -74,18 +50,18 @@ function buildLoginContext(array $params, array $idpMap, string $returnURL, stri
 {
     $context = array(
         'ReturnTo' => $returnURL,
-        'ForceAuthn' => ($params['forceauthn'] ?? '') === 'true',
+        'ForceAuthn' => $params['forceauthn'] === 'true',
         'saml:NameIDPolicy' => null,
     );
 
     // IdP
-    if (isset($params['idp'])) {
+    if (paramIsSet($params, 'idp')) {
         $context['saml:idp'] = $params['idp'];
     }
 
     // LOA
     // An IdP can map a LOA to '' (e.g. the local IdP): then no AuthnContextClassRef is requested
-    $loa = $idpMap[$params['idp'] ?? '']['loa'][$params['loa'] ?? ''] ?? '';
+    $loa = $idpMap[$params['idp']]['loa'][$params['loa']] ?? '';
     if (strlen($loa) > 0) {
         $context['saml:AuthnContextClassRef'] = $loa;
     }
@@ -140,7 +116,7 @@ function buildLoginContext(array $params, array $idpMap, string $returnURL, stri
     // must be used to validate the response as that will rename the "_SAMLResponse" POST variable back to "SAMLResponse" so that
     // SimpleSAMLphp can then process it normally.
     // For more information See: https://github.com/OpenConext/Stepup-Gateway/blob/main/docs/SFO.md#adfs-mfa-extension
-    if (($params['emulateadfs'] ?? '') === 'true') {
+    if ($params['emulateadfs'] === 'true') {
         // Set AuthMethod and mock Context like the SURF MFA extension for ADFS would do
         $context['debugsp:extraPOSTvars'] = array(
             'AuthMethod' => 'ADFS.SCSA',
@@ -229,16 +205,13 @@ function buildExtensionChunks(array $params): array
 
 
 /**
- * Link that logs in directly with the given form parameters: the non-empty parameters, sorted, with action=login
+ * Link that logs in directly with the given form parameters: action=login and the non-empty parameters, sorted
  */
 function buildDirectLoginLink(array $params, string $pageURL): string
 {
-    $query = array();
+    $query = array('action=login');
     foreach ($params as $name => $value) {
-        if (is_string($value) && strlen($value) > 0) {
-            if ($name === 'action') {
-                $value = 'login';
-            }
+        if ($value !== '') {
             $query[] = urlencode($name) . '=' . urlencode($value);
         }
     }

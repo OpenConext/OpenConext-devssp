@@ -213,26 +213,48 @@ function AttributeNameToHTML($attribute) {
 
 
 
-function HTML_select($label, $id, $options, $value="", $info="")
+/**
+ * Render a field of the login form of the Test SP: its label and input, followed by a line break
+ *
+ * @param array $fields The fields of the form (see sp-fields.inc)
+ * @param string $name Name of the field to render
+ * @param array $params The values of the fields
+ */
+function renderField(array $fields, string $name, array $params): void
 {
-    $label=htmlentities($label);
-    $id=htmlentities($id);
-    $value=htmlentities($value);
-    echo "<p><label";
-    $info=htmlentities($info);
-    if (strlen($info)>0)
-        echo " title=\"{$info}\"";
-    echo ">{$label}</label><select id=\"{$id}\" name=\"{$id}\">";
-    foreach ($options as $name => $display) {
-        $name=htmlentities($name);
-        $display=htmlentities($display);
-        echo "<option value=\"{$name}\"";
-        if ($name==$value) {
-            echo " selected=\"selected\"";
-        }
-        echo ">{$display}</option>";
+    $field = $fields[$name];
+    $id = e($field['id'] ?? $name);
+    $value = $params[$name] ?? '';
+    $title = isset($field['help']) ? ' title="' . e($field['help']) . '"' : '';
+
+    echo "<label for=\"{$id}\"{$title}>" . e($field['label']) . "</label>";
+    switch ($field['type']) {
+        case 'select':
+            echo "<select id=\"{$id}\" name=\"" . e($name) . "\">";
+            foreach ($field['options'] as $optionValue => $display) {
+                $selected = (string) $optionValue === $value ? ' selected="selected"' : '';
+                echo "<option value=\"" . e($optionValue) . "\"{$selected}>" . e($display) . "</option>";
+            }
+            echo "</select>";
+            break;
+        case 'checkbox':
+            $checked = $value === 'true' ? ' checked="checked"' : '';
+            echo "<input id=\"{$id}\" type=\"checkbox\" name=\"" . e($name) . "\" value=\"true\"{$checked} />";
+            break;
+        case 'text':
+            $listOf = $field['list'] ?? (isset($field['datalist']) ? $name : null);
+            $list = $listOf !== null ? ' list="' . e($listOf) . '_list"' : '';
+            echo "<input id=\"{$id}\" type=\"text\" name=\"" . e($name) . "\"{$list} value=\"" . e($value) . "\" size=\"80\" />";
+            if (isset($field['datalist'])) {
+                echo "<datalist id=\"" . e($name) . "_list\">";
+                foreach ($field['datalist'] as $option) {
+                    echo "<option value=\"" . e($option) . "\"></option>";
+                }
+                echo "</datalist>";
+            }
+            break;
     }
-    echo "</select></p>";
+    echo "<br />\n";
 }
 
 
