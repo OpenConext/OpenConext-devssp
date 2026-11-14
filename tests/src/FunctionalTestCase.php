@@ -98,7 +98,7 @@ abstract class FunctionalTestCase extends TestCase
     {
         self::assertStringEndsWith(self::SP_PATH . '?sp=' . $sp, strtok($this->browser->currentUrl(), '#'), 'Ended at the Test SP' . $this->browser->trail());
         self::assertSame($sp, self::labelValue($page, 'You are logged in to SP:'), 'Logged in at the SP' . $this->browser->trail() . "\n" . DevSspBrowser::pageText($this->browser->content()));
-        self::assertSame($idp, self::labelValue($page, 'IdP EnitytID:'));
+        self::assertSame($idp, self::labelValue($page, 'IdP EntityID:'));
     }
 
     /**

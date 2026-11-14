@@ -189,7 +189,7 @@ final class LocalIdpLoginTest extends FunctionalTestCase
         $this->browser->submit($this->browser->get(self::SP_PATH)->filter('form#logout button[value="logout"]')->form());
         $page = $this->browser->settle();
 
-        self::assertStringContainsString('Your are not logged in', $page->text(), $this->browser->trail());
+        self::assertStringContainsString('You are not logged in', $page->text(), $this->browser->trail());
         self::assertCount(0, $page->filter('form#logout'));
 
         // The local IdP has no SingleLogoutService in saml20-idp-remote.php, so the SP logs out locally only

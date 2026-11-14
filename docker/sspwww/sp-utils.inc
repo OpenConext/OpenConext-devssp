@@ -3,6 +3,12 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Utilities for generating HTML
 
+/** Escape a value for use in HTML text and (quoted) attribute values */
+function e($value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
+}
+
 /** Derive a HTML color from a string value
  *
  * The same string value will always generate the same color. The returned color is suitable for use
