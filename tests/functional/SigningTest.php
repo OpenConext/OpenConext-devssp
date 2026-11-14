@@ -34,6 +34,40 @@ final class SigningTest extends FunctionalTestCase
         self::assertSame(1, $this->verifyRedirectSignature($request, $this->spCertificate(), $opensslAlgorithm), 'Signature is valid for the SP certificate');
     }
 
+    /** With the HTTP-POST binding the AuthnRequest XML itself is signed, with the selected algorithm */
+    #[DataProvider('algorithms')]
+    public function testSignedWithSelectedAlgorithmUsingPostBinding(string $signing, string $sigAlg, int $opensslAlgorithm): void
+    {
+        $this->loginViaSp([
+            'idp' => self::GATEWAY_IDP,
+            'signing' => $signing,
+            'ssobinding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+        ], null);
+
+        self::assertSame('https://gateway.dev.openconext.local/authentication/single-sign-on', $this->browser->stoppedAt(), $this->browser->trail());
+        $request = $this->browser->lastAuthnRequest();
+        self::assertSame(SamlMessage::BINDING_POST, $request->binding);
+        self::assertSame($sigAlg, $request->value('/samlp:AuthnRequest/ds:Signature/ds:SignedInfo/ds:SignatureMethod/@Algorithm'));
+        // The signature is made with the key of the SP
+        self::assertSame(
+            preg_replace('/\s+/', '', $this->spCertificateBase64()),
+            preg_replace('/\s+/', '', $request->value('/samlp:AuthnRequest/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate'))
+        );
+    }
+
+    public function testUnsignedUsingPostBinding(): void
+    {
+        $this->loginViaSp([
+            'idp' => self::GATEWAY_IDP,
+            'signing' => 'none',
+            'ssobinding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+        ], null);
+
+        $request = $this->browser->lastAuthnRequest();
+        self::assertSame(SamlMessage::BINDING_POST, $request->binding);
+        self::assertSame(0, $request->xpath->query('/samlp:AuthnRequest/ds:Signature')->length);
+    }
+
     public function testUnsigned(): void
     {
         $request = $this->authnRequestToGateway(['signing' => 'none']);
@@ -94,10 +128,16 @@ final class SigningTest extends FunctionalTestCase
     /** The certificate (PEM) of the SP, from its metadata */
     private function spCertificate(): string
     {
+        return "-----BEGIN CERTIFICATE-----\n" . chunk_split($this->spCertificateBase64(), 64, "\n") . "-----END CERTIFICATE-----\n";
+    }
+
+    /** The certificate of the SP (base64 DER, as in metadata), from its metadata */
+    private function spCertificateBase64(): string
+    {
         $browser = $this->newBrowser();
         $browser->get('/simplesaml/module.php/saml/sp/metadata.php/default-sp');
         self::assertSame(1, preg_match('#<ds:X509Certificate>([^<]+)</ds:X509Certificate>#', $browser->content(), $m));
-        return "-----BEGIN CERTIFICATE-----\n" . chunk_split(preg_replace('/\s+/', '', $m[1]), 64, "\n") . "-----END CERTIFICATE-----\n";
+        return (string) preg_replace('/\s+/', '', $m[1]);
     }
 
     /**

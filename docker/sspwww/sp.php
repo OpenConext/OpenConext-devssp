@@ -66,11 +66,6 @@ if ( isset($_REQUEST['key']) && $_REQUEST['key']=='secondary' ) {
     $key='secondary';
 }
 
-//if ( isset($_REQUEST['ProtocolBinding'])) {
-//    $GLOBALS['gSP_ProtocolBinding'] = $_REQUEST['gSP_ProtocolBinding'];
-//}
-//$protocolBinding=$GLOBALS['gSP_ProtocolBinding'];
-
 if ( isset($_REQUEST['ssobinding'])) {
     switch ($_REQUEST['ssobinding'])
     {
@@ -153,7 +148,9 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
     }
 
     // LOA
-    if ( isset($_REQUEST['loa']) && isset($_REQUEST['idp']) && isset($gIDPmap[$_REQUEST['idp']]['loa'][$_REQUEST['loa']]) ) {
+    // An IdP can map a LOA to '' (e.g. the local IdP): then no AuthnContextClassRef is requested
+    if ( isset($_REQUEST['loa']) && isset($_REQUEST['idp']) && isset($gIDPmap[$_REQUEST['idp']]['loa'][$_REQUEST['loa']])
+        && strlen($gIDPmap[$_REQUEST['idp']]['loa'][$_REQUEST['loa']]) > 0 ) {
         $loa = $gIDPmap[$_REQUEST['idp']]['loa'][$_REQUEST['loa']];
         // Store the requested LOA in the session so we can verify it later
         $session->setData('string', 'RequiredAuthnContextClassRef', $loa);

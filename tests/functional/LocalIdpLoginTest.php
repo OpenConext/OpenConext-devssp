@@ -248,6 +248,31 @@ final class LocalIdpLoginTest extends FunctionalTestCase
         self::assertSame('', $page->filter('#requesterid')->attr('value'));
     }
 
+    /** The Login button at the top of the form (next to the IdP and LOA) */
+    public function testTopLoginButton(): void
+    {
+        $page = $this->browser->get(self::SP_PATH);
+        $this->browser->submit($page->filter('#login_2')->form(['idp' => self::ENTRA_IDP, 'loa' => '2']));
+        $page = $this->browser->settle('jane-a1');
+
+        $this->assertLoggedIn($page, 'default-sp', self::ENTRA_IDP);
+        self::assertSame('http://schemas.microsoft.com/claims/multipleauthn', self::labelValue($page, 'Requested LOA was:'));
+    }
+
+    public function testUpdateDirectLoginLink(): void
+    {
+        $page = $this->browser->get(self::SP_PATH);
+        $page = $this->browser->submit($page->filter('#show_login_link')->form(['idp' => self::LOCAL_IDP, 'sp' => 'second-sp']));
+        self::assertStringContainsString('sp=second-sp', $page->selectLink('Direct login link')->attr('href'));
+
+        // Change an option and update the link
+        $page = $this->browser->submit($page->filter('#update_login_link')->form(['sp' => 'fourth-sp', 'subject' => 'urn:example:subject']));
+        $href = $page->selectLink('Direct login link')->attr('href');
+        self::assertStringContainsString('sp=fourth-sp', $href);
+        self::assertStringContainsString('subject=' . urlencode('urn:example:subject'), $href);
+        self::assertStringContainsString('action=login', $href);
+    }
+
     public function testDirectLoginLink(): void
     {
         $page = $this->browser->get(self::SP_PATH);
