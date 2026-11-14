@@ -585,9 +585,11 @@ $config = [
         'admin' => true,
         'saml' => true,
 
-        'exampleauth' => true,            
+        'exampleauth' => true,
         'debugsp' => true,
         'saml2debug' => true,
+        // OpenConext theme and username-only authsource used by both IdPs
+        'openconext' => true,
     ],
 
 
@@ -888,8 +890,10 @@ $config = [
 
     /*
      * Which theme directory should be used?
+     * Both IdPs (the main IdP under /simplesaml/ and the EntraID mock under /entra-mock/)
+     * use the OpenConext theme of the 'openconext' module (see docker/modules/openconext).
      */
-    'theme.use' => 'default',
+    'theme.use' => 'openconext:openconext',
 
     /*
      * Set this option to the text you would like to appear at the header of each page. Set to false if you don't want
@@ -946,9 +950,15 @@ $config = [
          */
         'caching' => [
             /*
-             * Amount of seconds before the resource should be fetched again
+             * Amount of seconds before the resource should be fetched again.
+             *
+             * This is a development container, and the ?tag= cache-buster in asset URLs is
+             * derived from the SimpleSAMLphp version (constant across rebuilds), so a long
+             * max_age makes browsers keep serving a stale stylesheet after theme changes.
+             * Use max_age 0: the browser revalidates on every request and gets a 304 when
+             * the file did not change.
              */
-            'max_age' => 86400,
+            'max_age' => 0,
             /*
              * Calculate a checksum of every file and send it to the browser
              * This allows the browser to avoid downloading assets again in situations
@@ -957,7 +967,7 @@ $config = [
              *
              * Defaults false
              */
-            'etag' => false,
+            'etag' => true,
         ],
     ],
 

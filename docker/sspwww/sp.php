@@ -486,6 +486,30 @@ echo <<<html
                <p>
                     <button id="login_2" class="login" type="submit" name="action" value="login">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
                </p>
+html;
+
+// SAML Error Status: shown when the IdP returned a SAML error response (e.g. the Responder /
+// AuthnFailed response when the user presses Cancel at the EntraID mock IdP). The response is
+// stored in the session by the debugsp module's ACS (see docker/modules/debugsp), which stops
+// SimpleSAMLphp from handling the SAML error itself.
+$samlError = $session->getData('array', 'DEBUGSP_SAML_ERROR');
+if (is_array($samlError)) {
+    $session->deleteData('array', 'DEBUGSP_SAML_ERROR');  // show it only once
+    echo "<h3>SAML Error Status</h3>\n";
+    echo "<p>\n";
+    foreach (array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode', 'SubStatusCode', 'StatusMessage') as $field) {
+        if (isset($samlError[$field]) && $samlError[$field] !== '') {
+            echo "<label>" . htmlentities($field) . ":</label><code>" . htmlentities($samlError[$field]) . "</code><br />\n";
+        }
+    }
+    echo "</p>\n";
+    if (isset($samlError['xml'])) {
+        echo "<h4>SAML Response XML</h4>\n";
+        echo "<pre>" . htmlentities($samlError['xml']) . "</pre>\n";
+    }
+}
+
+echo <<<html
                <h3>Advanced options</h3>
 html;
                 // Build direct login link from submitted parameters

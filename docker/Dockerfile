@@ -11,6 +11,9 @@ WORKDIR /var/www/simplesaml
 RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.4.0/simplesamlphp-2.4.0-full.tar.gz" \
     | tar -xvz -C /var/www/simplesaml --strip-components=1
 COPY ./modules/ /var/www/simplesaml/my-modules/
+# The openconext module (OpenConext theme + username-only authsource of the IdPs) must live in
+# modules/ to be discovered by SimpleSAMLphp
+COPY ./modules/openconext/ /var/www/simplesaml/modules/openconext/
 COPY ./html/* /var/www/html
 COPY ./sspwww/* /var/www/simplesaml/public/ 
 COPY ./sspconf/ /var/www/simplesaml/config/

@@ -15,14 +15,26 @@ EntraID tenant. The mock is served under its own base path on the same host:
 
 - Entity ID and metadata: `https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php`
 - SingleSignOnService (HTTP-Redirect): `https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService`
+- Both IdPs use the OpenConext theme (OpenConext logo, light blue `rgb(77, 179, 207)` instead of the default
+  SimpleSAMLphp red): the `openconext` module in `docker/modules/openconext` provides the `openconext:openconext`
+  theme, selected with `theme.use` in `config.php`. The login page is titled "OpenConext Test IdP" at the main
+  IdP and "OpenConext EntraID Mock IdP" at the mock.
 
 ## Accounts
 
-Log in with the same username and password as at the main IdP (e.g. `jane-a1` / `jane-a1`). The mock uses its own
-authsource (`entra-mock-userpass` in `authsources.php`), so there is never SSO with the main IdP.
+The login pages of both IdPs have no password field: only the username is needed. Both authsources use the
+`openconext:UserPass` class (see `docker/modules/openconext`), which ignores the password part of the
+`username:password` account entries.
 
-Use the special account `cancel` / `cancel` to simulate a user cancelling the authentication at EntraID: the mock
-returns a SAML error response (Responder / AuthnFailed) to AzureMFA.
+- Main IdP (`example-userpass` in `authsources.php`): log in with any test account, e.g. `jane-a1`.
+- EntraID mock (`entra-mock-userpass`): the same accounts, e.g. `jane-a1`. The mock uses its own authsource,
+  so there is never SSO with the main IdP.
+
+Use the Cancel button on the login page to simulate a user cancelling the authentication: the button submits
+the special account `cancel`, for which the IdP returns a SAML error response (Responder / AuthnFailed) to the
+SP (at the mock: to AzureMFA). The cancel authproc filter also clears the SSO session of the authsource, so a
+cancelled login does not leave an authenticated session behind: the next AuthnRequest without ForceAuthn shows
+the login page again.
 
 ## Behaviour
 
@@ -57,6 +69,10 @@ accepted by the mock. Note:
   login page again after a first login at the mock.
 - Selecting LoA 2 or 3 requests the `http://schemas.microsoft.com/claims/multipleauthn` AuthnContextClassRef, like
   AzureMFA does. The mock ignores it.
+- When the IdP returns a SAML error response (e.g. press Cancel on the mock's login page), the Test SP does not show
+  the SimpleSAMLphp error page: the `debugsp` module's ACS (`docker/modules/debugsp`) intercepts the error response,
+  stores it in the session and redirects back to `sp.php`, which shows a "SAML Error Status" section (after
+  "Login (again)", before "Advanced options") with the status codes, message and the full XML of the response.
 
 ## Key material
 
@@ -97,7 +113,7 @@ Instead of `entity_id`, `sso_location` and `certificates` you can use
 `metadata_url: 'https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'`.
 
 To test: in Stepup-SelfService log in as e.g. `jane-f1`, register an Azure MFA token and log in at the mock as
-`jane-f1` / `jane-f1`.
+`jane-f1` (username only, no password).
 
 # Development
 

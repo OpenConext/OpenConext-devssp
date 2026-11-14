@@ -1,0 +1,99 @@
+/*
+ * OpenConext theme ("openconext:openconext"), used by both IdPs of this devssp
+ * instance (the main IdP under /simplesaml/ and the EntraID mock under /entra-mock/).
+ *
+ * Replaces the red of the default SimpleSAMLphp theme with the OpenConext
+ * light blue rgb(77, 179, 207) and shows the OpenConext logo in the header.
+ */
+
+/* Header and footer: solid OpenConext light blue instead of the red gradient */
+#header,
+#footer {
+    background: #4db3cf; /* rgb(77, 179, 207) */
+}
+
+/* Mobile menu */
+#menu {
+    background: #4db3cf;
+}
+
+#menu .pure-menu ul,
+#menu .pure-menu .menu-item-divided {
+    border-top: 1px solid #3e8fa6;
+}
+
+#menu .pure-menu-selected,
+#menu .pure-menu-heading {
+    background: #3e8fa6;
+}
+
+/* The (red) login button of the default theme */
+.pure-button-red {
+    background-color: #4db3cf;
+}
+
+.pure-button-red:hover,
+.pure-button-red:focus {
+    background-color: #3e8fa6;
+    color: #fff;
+}
+
+/* OpenConext logo in the header (see themes/openconext/default/_header.twig) */
+#logo img {
+    height: 3rem;
+    margin: 1.5rem 0;
+}
+
+/*
+ * Login form layout: a fixed-width form, so that the "Username" label + input field,
+ * the example-accounts hint and the Cancel/Login buttons all line up:
+ * - the label column of a pure-form-aligned form is 10em wide with a 1em right margin,
+ *   so the input field starts at 11em and spans to the right edge of the form;
+ * - the hint (pure-form-message) is a full-width block, left-aligned with the label;
+ * - the button row is full-width: Cancel floated left, Login floated right.
+ */
+.login-form-start form {
+    width: 26em;
+    max-width: 100%;
+}
+
+/* Username row: label left of the input on the same line. Flex (instead of inline-block)
+   so the whitespace between </label> and <input> cannot push the input to the next line. */
+.login-form-start .pure-control-group.login-username {
+    display: flex;
+    align-items: center;
+}
+
+.login-form-start .login-username label {
+    flex: 0 0 10em; /* same as the pure-form-aligned label column */
+    margin: 0 1em 0 0;
+    text-align: right;
+}
+
+.login-form-start .login-username input#username {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.login-form-submit .pure-button {
+    box-sizing: border-box; /* keep the two 50%-wide buttons on the same line */
+    margin-left: 0;         /* override the default .pure-button margin for exact alignment */
+}
+
+@media screen and (max-width: 40em) {
+    .login-form-start form {
+        width: 100%;
+    }
+    /* On small screens the label goes above the input (pure's default), input full-width */
+    .login-form-start .pure-control-group.login-username {
+        display: block;
+    }
+    .login-form-start .login-username label {
+        display: block;
+        width: 100%;
+        text-align: left;
+    }
+    .login-form-start .login-username input#username {
+        width: 100%;
+    }
+}

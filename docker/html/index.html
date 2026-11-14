@@ -41,6 +41,7 @@
     <p>
         For all test accounts, the username (uid) is equal to the password.
         The account <code>admin</code> is intended as a pre-provisioned superuser account.
+        At the login pages of the IdPs only the username is needed: there is no password field.
     </p>
 
     <p>
@@ -164,11 +165,11 @@
         <li>SingleSignOnService endpoint (HTTP-Redirect): <code>https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService</code></li>
     </ul>
     <p>
-        Authenticate with the same username and password as at the main IdP (see <a href="#test-accounts">Test accounts</a>),
-        e.g. <code>jane-a1</code> / <code>jane-a1</code>. There is no SSO, neither with the main IdP nor at the mock
+        Authenticate with the same username as at the main IdP (see <a href="#test-accounts">Test accounts</a>),
+        e.g. <code>jane-a1</code>; only the username is needed, the login page has no password field.
+        There is no SSO, neither with the main IdP nor at the mock
         itself: every authentication shows the login page.
-        Emulate a user cancelling the authentication at EntraID by logging in with username <code>cancel</code> and
-        password <code>cancel</code>.
+        Emulate a user cancelling the authentication at EntraID with the Cancel button on the login page.
     </p>
 
     <h2 id="tools">Tools</h2>

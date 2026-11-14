@@ -174,6 +174,40 @@ $attribute_authority_authproc=array(
 );
 
 
+// Shared authproc filter for both IdPs below: simulate a user cancelling the authentication
+// (the "cancel" account, submitted by the Cancel button on the login page): send a SAML
+// error response (Responder / AuthnFailed) to the SP, using the same responder
+// SimpleSAMLphp uses for authentication errors. (A plain "throw" would not work here:
+// with ForceAuthn the authproc runs after the login completed, where an exception would
+// only result in an error page, not a SAML response.)
+//
+// The SSO session of the authsource is cleared first: the "cancel" login must not leave
+// an authenticated session behind, otherwise following AuthnRequests without ForceAuthn
+// would be SSO-ed as the "cancel" user (and fail with the same SAML error).
+//
+// Note: this filter must run before the AttributeMap filter (key 10), which renames "uid"
+// to its urn:mace:... equivalent.
+$cancel_authproc = array(
+    2 => array(
+        'class' => 'core:PHP',
+        'code' => '
+            if (isset($attributes["uid"][0]) && $attributes["uid"][0] === "cancel") {
+                if (isset($state["\SimpleSAML\Auth\Source.id"])) {
+                    \SimpleSAML\Session::getSessionFromRequest()->doLogout($state["\SimpleSAML\Auth\Source.id"]);
+                }
+                \SimpleSAML\Module\saml\IdP\SAML2::handleAuthError(
+                    new \SimpleSAML\Module\saml\Error(
+                        \SAML2\Constants::STATUS_RESPONDER,
+                        \SAML2\Constants::STATUS_AUTHN_FAILED,
+                        "Authentication cancelled by user"
+                    ),
+                    $state
+                );
+            }
+        ',
+    ),
+);
+
 $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] = array(
     'host' => 'ssp.dev.openconext.local',
 
@@ -218,7 +252,8 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
     // The IdP proxy must pass the ID of the user to the Stepup-Gateway along with the attributes for the SP.    
 
     //'authproc' => $subject_method1_authproc,
-    'authproc' => array_merge($subject_method2_authproc, $attribute_authority_authproc),
+    // The cancel filter runs first, before the AttributeMap renames "uid" (see above)
+    'authproc' => array_merge($cancel_authproc, $subject_method2_authproc, $attribute_authority_authproc),
 
     // Required because the eduPersonTargetedID is a "complex" attribute and not a simple string value.
     'attributeencodings' => array(
@@ -269,27 +304,11 @@ $entra_mock_authproc = array(
         'NameQualifier' => FALSE,
         'SPNameQualifier' => FALSE,
     ),
+);
 
-    // Simulate a user cancelling the authentication at the (mock) EntraID (the "cancel"
-    // account): send a SAML error response (Responder / AuthnFailed) to the SP (AzureMFA),
-    // using the same responder SimpleSAMLphp uses for authentication errors. (A plain
-    // "throw" would not work here: with ForceAuthn the authproc runs after the login
-    // completed, where an exception would only result in an error page, not a SAML response.)
-    2 => array(
-        'class' => 'core:PHP',
-        'code' => '
-            if (isset($attributes["uid"][0]) && $attributes["uid"][0] === "cancel") {
-                \SimpleSAML\Module\saml\IdP\SAML2::handleAuthError(
-                    new \SimpleSAML\Module\saml\Error(
-                        \SAML2\Constants::STATUS_RESPONDER,
-                        \SAML2\Constants::STATUS_AUTHN_FAILED,
-                        "Authentication cancelled by user"
-                    ),
-                    $state
-                );
-            }
-        ',
-    ),
+// The rest of the mock authproc, merged after the shared $cancel_authproc below, so that
+// the cancel filter runs before the AttributeMap renames "uid" (see $cancel_authproc).
+$entra_mock_authproc_rest = array(
 
     // Remove the NameID attribute from the attributes, so that it is not released as an
     // attribute (it would be renamed to internal-collabPersonId by the AttributeMap below)
@@ -361,7 +380,7 @@ $metadata['https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'] 
     // requests another NameID format (SimpleSAMLphp then falls back to this format)
     'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 
-    'authproc' => array_merge($entra_mock_authproc, $attribute_authority_authproc),
+    'authproc' => array_merge($entra_mock_authproc, $cancel_authproc, $entra_mock_authproc_rest, $attribute_authority_authproc),
 
 );
 
