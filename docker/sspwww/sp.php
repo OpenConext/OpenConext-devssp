@@ -180,8 +180,13 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
     }
 
     // NameIDPolicy
+    // SimpleSAMLphp 2.x expects the NameIDPolicy as an array with the attributes of the NameIDPolicy element.
+    // AllowCreate is set to true, like the default NameIDPolicy that SimpleSAMLphp generates.
     if ( isset($_REQUEST['nameidpolicy']) && strlen($_REQUEST['nameidpolicy']) > 0 ) {
-        $context['saml:NameIDPolicy'] = $_REQUEST['nameidpolicy'];
+        $context['saml:NameIDPolicy'] = array(
+            'Format' => $_REQUEST['nameidpolicy'],
+            'AllowCreate' => true,
+        );
     }
 
     // Subject NameID
