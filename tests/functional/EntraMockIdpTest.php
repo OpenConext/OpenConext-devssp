@@ -62,6 +62,28 @@ final class EntraMockIdpTest extends FunctionalTestCase
         self::assertCount(0, $page->filter('#saml-xml-verbatim'));
     }
 
+    /** A failed login does not end the SP session of an earlier login: the page shows the error first, then the earlier login */
+    public function testCancelWhileLoggedIn(): void
+    {
+        $this->loginViaSp(['idp' => self::LOCAL_IDP], 'jane-a1');
+        $page = $this->loginViaSp(['idp' => self::ENTRA_IDP], 'jane-a2', cancel: true);
+
+        // The error comes first on the page
+        self::assertSame('Last login failed', trim($page->filter('h3')->first()->text()), $this->browser->trail());
+        self::assertSame('AuthnFailed', self::lastPart(self::tableValue($page, 'SAML Error Status', 'SubStatusCode')));
+
+        // Still logged in, from the login at the local IdP
+        self::assertStringContainsString('You are still logged in to SP default-sp from an earlier login', $page->filter('#earlier_login')->text());
+        self::assertSame('default-sp', self::labelValue($page, 'You are logged in to SP:'));
+        self::assertSame(self::LOCAL_IDP, self::labelValue($page, 'IdP EntityID:'));
+        self::assertCount(1, $page->filterXPath("//h3[normalize-space(.)='SP Session (default-sp) from an earlier login, still active']"));
+
+        // Once the error is shown, the page is back to normal
+        $page = $this->browser->get(self::SP_PATH);
+        self::assertCount(0, $page->filter('#earlier_login'));
+        self::assertCount(1, $page->filterXPath("//h3[normalize-space(.)='SP Session (default-sp)']"));
+    }
+
     public function testCancelAtLocalIdp(): void
     {
         $page = $this->loginViaSp(['idp' => self::LOCAL_IDP], 'jane-a1', cancel: true);

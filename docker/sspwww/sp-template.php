@@ -31,6 +31,17 @@ $samlResponse = $view['samlResponse'];
 <body>
 <h1>simpleSAMLphp Test SP</h1>
 
+<?php if ($view['samlResponseIsError']): ?>
+    <?php /* The IdP returned a SAML error response to the last login. Shown first: it is the result of what the user did last */ ?>
+    <h3 class="login-failed">Last login failed</h3>
+    <p>The Identity Provider returned a SAML error response. The XML of the response is shown at the end of the page.</p>
+    <h4>SAML Error Status</h4>
+    <?php SAMLResponseFieldsToTable($samlResponse, array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode', 'SubStatusCode', 'StatusMessage')) ?>
+    <?php if ($auth !== null): ?>
+        <p id="earlier_login">You are still logged in to SP <strong><?= e($view['pageSP']) ?></strong> from an earlier login, at <?= e($auth['authnInstant']) ?>. The information below is from that login.</p>
+    <?php endif ?>
+<?php endif ?>
+
 <?php if ($auth !== null): ?>
     <label>You are logged in to SP:</label><code><?= e($view['pageSP']) ?></code><br />
     <label>IdP EntityID:</label><code><?= e($auth['idpEntityID']) ?></code><br />
@@ -39,7 +50,7 @@ $samlResponse = $view['samlResponse'];
         <p><button class="logout" type="submit" name="action" value="logout" title="Log out of <?= e($view['pageSP']) ?>. Note that this does not log you out of any Identity Provider.">Logout</button></p>
     </form>
 
-    <h3>Session</h3>
+    <h3>SP Session (<?= e($view['pageSP']) ?>)<?= $view['samlResponseIsError'] ? ' from an earlier login, still active' : '' ?></h3>
     <p>
     <?php if ($auth['sessionIndex'] !== ''): ?>
         <label>SessionIndex:</label><code style="background-color: <?= HTMLColorFingerprint($auth['sessionIndex']) ?>"><?= e($auth['sessionIndex']) ?></code><br />
@@ -86,12 +97,6 @@ $samlResponse = $view['samlResponse'];
     <p>
         <button id="login_2" class="login" type="submit" name="action" value="login" title="Log in to the selected Service Provider with the selected Identity Provider (again)">Login</button>&nbsp;&nbsp;<button type="submit" name="action" value="reset">Reset</button><br />
     </p>
-
-<?php if ($view['samlResponseIsError']): ?>
-    <h3>SAML Error Status</h3>
-    <?php SAMLResponseFieldsToTable($samlResponse, array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode', 'SubStatusCode', 'StatusMessage')) ?>
-    <?php /* The XML of the response is shown at the end of the page */ ?>
-<?php endif ?>
 
     <h3>Advanced options</h3>
 <?php if ($view['directLoginLink'] !== null): ?>
