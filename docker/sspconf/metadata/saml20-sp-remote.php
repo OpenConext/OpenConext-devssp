@@ -71,7 +71,8 @@ $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = arra
 // - The AuthnRequests sent by AzureMFA are signed with its SP key; the signature is
 //   required at the mock IdP (validate.authnrequest) and validated against this certificate.
 //   The certificate file is not part of this repository; it is provided in the cert dir
-//   (mounted from OpenConext-devconf/stepup/azuremfa in the devconf setup).
+//   (mounted from OpenConext-devconf/stepup/ssp in the devconf setup, a copy of
+//   OpenConext-devconf/stepup/azuremfa/azuremfa_idp.crt).
 // - ForceAuthn is set so that no SSO session is ever reused for AuthnRequests from
 //   AzureMFA at the mock IdP: every AuthnRequest results in the login page of the mock IdP.
 

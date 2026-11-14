@@ -45,4 +45,14 @@ $gIDPmap = array(
             "3" => '',
         ),
     ),
+    // The EntraID mock IdP. Stepup-AzureMFA always requests the multipleauthn AuthnContextClassRef; the mock ignores it
+    'https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php' => array(
+        'name' => 'EntraID mock IdP - ssp.dev.openconext.local/entra-mock',
+        'loa' => array(
+            "1" => '',
+            "1.5" => '',
+            "2" => 'http://schemas.microsoft.com/claims/multipleauthn',
+            "3" => 'http://schemas.microsoft.com/claims/multipleauthn',
+        ),
+    ),
 );

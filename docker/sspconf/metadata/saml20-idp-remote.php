@@ -32,6 +32,32 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 
 
 ////////////////////////////////////////////////////////////////////////////
+// Idp remote metadata of the EntraID mock IdP hosted at this instance, for use by the hosted SPs (the Test SP), so
+// the mock can be tested from the Test SP. This hosted IdP is defined in sspconf/metadata/saml20-idp-hosted.php.
+// The hosted SPs are already known to the mock: they are in sspconf/metadata/saml20-sp-remote.php.
+// Note: The mock requires signed AuthnRequests, so authentication fails when signing is disabled in the Test SP, or
+// when the Test SP signs with a key that does not match its metadata (sp.crt).
+
+$metadata['https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'] = array (
+    'entityid' => 'https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php',
+    'signature.algorithm' => 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+    'certificate' => 'entra-mock-idp.crt',
+    'SingleSignOnService' =>
+        array (
+            0 =>
+                array (
+                    'Binding' => $GLOBALS['gSP_SSOBinding'] ?? 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+                    'Location' => 'https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService',
+                ),
+        ),
+    'name' => array(
+        'en' => 'ssp.dev.openconext.local - EntraID mock IdP',
+        'nl' => 'ssp.dev.openconext.local - EntraID mock IdP',
+    ),
+);
+
+
+////////////////////////////////////////////////////////////////////////////
 // The metadata of the Stepup-Gateway IdP, for use by the hosted SPs
 
 $metadata['https://gateway.dev.openconext.local/authentication/metadata'] = array (

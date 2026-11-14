@@ -255,13 +255,15 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 
 $entra_mock_authproc = array(
 
-    // Generate an unspecified NameID for use by this IdP, using the value of the "NameID"
-    // attribute from the authsource as the NameID in the Subject of the SAML Assertion
+    // Generate an emailAddress NameID with the userPrincipalName (UPN) of the user, like EntraID
+    // does. The eduPersonPrincipalName of the account (uid@schacHomeOrganization, e.g.
+    // jane-a1@institution-a.example.com) is used as UPN. This NameID deliberately differs from
+    // the urn:collab:person:... NameID of the main IdP and from the mail attribute, so that an
+    // SP that wrongly uses the NameID instead of the mail attribute breaks.
     1 => array(
         'class' => 'saml:AttributeNameID',
-        'attribute' => 'NameID',
-        'identifyingAttribute' => 'NameID',
-        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+        'identifyingAttribute' => 'eduPersonPrincipalName',
+        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 
         // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
         'NameQualifier' => FALSE,
@@ -298,17 +300,10 @@ $entra_mock_authproc = array(
         '%remove',
     ),
 
-    // AzureMFA validates that the mail attribute in the response contains the email
-    // address the user registered with. Use the email address generated for the account
-    // (eduPersonPrincipalName, i.e. uid@schacHomeOrganization), e.g. jane-a1@institution-a.example.com
-    7 => array(
-        'class' => 'core:PHP',
-        'code' => '
-            if (isset($attributes["eduPersonPrincipalName"][0])) {
-                $attributes["mail"] = array($attributes["eduPersonPrincipalName"][0]);
-            }
-        ',
-    ),
+    // Note: the mail attribute of the account is released unchanged. In this setup that means that email addresses
+    // look like jane+jane-a1@dev.openconext.local. For registration and authentication this
+    // is the email address used during registration; for the GSSP fallback it is the subject
+    // (mail) that the SP passes in the GSSP extension.
 
     // Convert "short" attribute names (uid, mail, ...) to their long urn:mace... equivalent.
     // The map is defined in sspattributemap/Openconext_short_to_urn.php
@@ -361,9 +356,10 @@ $metadata['https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'] 
 
     'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
 
-    // Use an unspecified NameID. The NameID is generated in the authproc above.
-    // This is the NameID that will be put in the Subject of the SAML Assertion
-    'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    // Use an emailAddress NameID with the UPN. The NameID is generated in the authproc above.
+    // This is the NameID that will be put in the Subject of the SAML Assertion, also when the SP
+    // requests another NameID format (SimpleSAMLphp then falls back to this format)
+    'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 
     'authproc' => array_merge($entra_mock_authproc, $attribute_authority_authproc),
 
