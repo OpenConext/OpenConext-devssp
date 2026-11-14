@@ -49,7 +49,7 @@ class SP extends \SimpleSAML\Module\saml\Auth\Source\SP
     }
 
 
-    public function startSSO(string $idp, array $state): void
+    public function startSSO(string $idp, array $state): never
     {
         $state_json = json_encode($state);
         Logger::debug("debugsp\Auth\Source\SP::startSSO('$idp', $state_json)");
@@ -77,7 +77,7 @@ class SP extends \SimpleSAML\Module\saml\Auth\Source\SP
 
     // Override \SimpleSAML\Auth\Source\SP::sendSAML2AuthnRequest() to allow us to make last minute changes to the
     // AuthnRequest before it is sent to the IdP
-    public function sendSAML2AuthnRequest(Binding $binding, AuthnRequest $ar): void
+    public function sendSAML2AuthnRequest(Binding $binding, AuthnRequest $ar): never
     {
         Logger::debug('debugsp: debugsp\Auth\Source\SP::sendSAML2AuthnRequest(...)');
         if (isset($this->state['debugsp:AssertionConsumerServiceURL'])) {

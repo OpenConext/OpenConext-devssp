@@ -11,7 +11,7 @@
   "type": "simplesamlphp-module",
   "require": {
     "simplesamlphp/composer-module-installer": "^1.3",
-    "simplesamlphp/simplesamlphp": "^2.1"
+    "simplesamlphp/simplesamlphp": "^2.5"
   },
   "autoload": {
     "psr-4": {

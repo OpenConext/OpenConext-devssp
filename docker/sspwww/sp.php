@@ -95,7 +95,10 @@ if ( isset($_REQUEST['sp'] ) ) {
 // Load SimpleSAMLphp
 // Note we do this *after* we have set the $GLOBALs for use in the SSP config.
 
-require_once('/var/www/simplesaml/lib/_autoload.php');
+// Use SimpleSAMLphp's own bootstrap (not just the autoloader): it also sets the SAML2 container.
+// Without it saml2-legacy falls back to its SAML2\Compat\Ssp\Container, which is incomplete
+// since SimpleSAMLphp 2.5 (it lacks getInflateSizeLimit()) and causes a fatal error.
+require_once('/var/www/simplesaml/public/_include.php');
 
 // Include some utility functions
 require_once('sp-utils.inc');
@@ -227,7 +230,6 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
             // Add some GET request parameters to the ACL URL. The IdP that can work with the ADFS SFO endpoint must use
             // this exact URL so these parameters are returned. We do not actually verify this currently
             $sspDebugSPACSURL = SimpleSAML\Module::getModuleURL('debugsp/acs/');
-            $sp=$_REQUEST['sp'];
             $context['debugsp:AssertionConsumerServiceURL'] = $sspDebugSPACSURL.$sp.'?SAMLRequest=request_that_must_be_kept&Context=context_value_that_must_be_kept';
         }
     }
@@ -280,7 +282,7 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
         $dom->appendChild($userAttributes);
 
         // Create a Chunk from the gssp:UserAttributes DOMElement
-        $userAttributesChunk = new \SAML2\XML\Chunk($userAttributes);
+        $userAttributesChunk = new \SimpleSAML\XML\Chunk($userAttributes);
 
         // Collect the gssp:UserAttributes chunk
         $extensionChunks[] = $userAttributesChunk;
@@ -298,12 +300,12 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
         $displayName->textContent = $_REQUEST['mdui_displayname'];
         $uiInfo->appendChild($displayName);
         $mduiDom->appendChild($uiInfo);
-        $extensionChunks[] = new \SAML2\XML\Chunk($uiInfo);
+        $extensionChunks[] = new \SimpleSAML\XML\Chunk($uiInfo);
     }
 
     // Add the collected extensions to the SAML request
     // The SAML2 library uses the 'saml:Extensions' element to hold the extensions which is an array of
-    // SAML2\XML\Chunk objects, one for each extension to add.
+    // \SimpleSAML\XML\Chunk objects (\SAML2\XML\Chunk before SimpleSAMLphp 2.5), one for each extension to add.
     // The SSP will then add the extensions to the SAML request by calling setExtensions(array $extensions) : void
     // on the SAML2\AuthnRequest object with the array of Chunk objects.
     if ( count($extensionChunks) > 0 ) {
@@ -325,7 +327,8 @@ if( isset($_REQUEST['action']) && $_REQUEST['action'] == 'logout' ) {
 
 if( isset($_REQUEST['action']) && $_REQUEST['action'] == 'reset' ) {
     $session->deleteData('array', 'SSP_DEMO_SP_FORM_DATA');
-    $_REQUEST=array();
+    // Keep the SP: we may be logged in to it
+    $_REQUEST=array('sp' => $sp);
 }
 
 

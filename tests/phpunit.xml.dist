@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         displayDetailsOnTestsThatTriggerWarnings="true">
+    <testsuites>
+        <testsuite name="devssp">
+            <directory>functional</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- Override any of these with an environment variable of the same name -->
+        <!-- Base URL of the devssp. The entity IDs in the SSP metadata use https://ssp.dev.openconext.local -->
+        <env name="DEVSSP_BASE_URL" value="https://ssp.dev.openconext.local" force="false"/>
+        <!-- Verify the TLS certificate of DEVSSP_BASE_URL. The dev certificate is self-signed -->
+        <env name="DEVSSP_VERIFY_TLS" value="0" force="false"/>
+        <!-- Error log of Apache / SimpleSAMLphp / PHP. A test fails when it causes errors in this log.
+             Set to an empty value to disable this check. -->
+        <env name="DEVSSP_LOG_FILE" value="/var/log/devssp/error.log" force="false"/>
+    </php>
+</phpunit>

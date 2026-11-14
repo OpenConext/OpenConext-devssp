@@ -154,6 +154,42 @@ With the `-r` option you can force a rebuild of the containers.
   ./dev-start.sh -r
 ```
 
+The container runs SimpleSAMLphp 2.5.4 on PHP 8.5 (SimpleSAMLphp 2.5 requires PHP 8.3 or later).
+
+## Functional tests
+
+The `tests/` directory contains functional tests that drive the devssp like a browser: they use the Test SP
+(`sp.php`), log in at the local IdP and the EntraID mock IdP, check the AuthnRequests that the Test SP sends,
+and test the attribute authority (`aa.php`) and the SAML tools (`tools.php`). Flows to the Stepup gateway are
+stopped at the devssp, so the gateway is not needed.
+
+The tests are a separate PHPUnit project with their own `composer.json`; they do not use SimpleSAMLphp.
+A test also fails when it causes an error in the error log of the devssp (SimpleSAMLphp, PHP and Apache errors),
+so errors that SimpleSAMLphp hides behind an error page are caught as well.
+
+Run the tests in the running container (start it first with `./dev-start.sh`):
+```bash
+  ./dev-test.sh
+```
+This copies `tests/` to the container, installs the dependencies and runs PHPUnit. Options are passed to PHPUnit:
+```bash
+  ./dev-test.sh --filter EntraMock
+```
+
+You can also run the tests from elsewhere, e.g. from the host or against a SimpleSAMLphp running outside Docker.
+They need PHP 8.3 or later and composer. These environment variables configure the tests (see `tests/phpunit.xml.dist`):
+- `DEVSSP_BASE_URL`: URL of the devssp, default `https://ssp.dev.openconext.local`
+- `DEVSSP_VERIFY_TLS`: verify the TLS certificate, default `0`
+- `DEVSSP_LOG_FILE`: the error log to check, default `/var/log/devssp/error.log`. Set it to an empty value to
+  disable the log check.
+
+```bash
+  cd tests && composer install && DEVSSP_LOG_FILE= vendor/bin/phpunit
+```
+
+In the container the Apache error log (to which SimpleSAMLphp logs) is written to both stderr (`docker compose logs`)
+and `/var/log/devssp/error.log`, see `docker/conf/000-default.conf`.
+
 ## Debugging
 The container has XDebug installed and configured.
 

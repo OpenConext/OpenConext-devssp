@@ -1,14 +1,14 @@
-FROM ghcr.io/openconext/openconext-basecontainers/php82-apache2-node20-composer2:latest
+FROM ghcr.io/openconext/openconext-basecontainers/php85-apache2-node24:latest
 # See:
-# https://github.com/OpenConext/OpenConext-BaseContainers/blob/main/php82-apache2-node20-composer2/Dockerfile
+# https://github.com/OpenConext/OpenConext-BaseContainers/blob/main/php85-apache2-node24/Dockerfile
 
-# https://github.com/OpenConext/OpenConext-BaseContainers/blob/main/php82-apache2/Dockerfile
+# https://github.com/OpenConext/OpenConext-BaseContainers/blob/main/php85-apache2/Dockerfile
 # Exposes PORT 80 for apache
 
 LABEL maintainer="pieter.vandermeulen@surf.nl"
 WORKDIR /var/www/simplesaml
 # Install SimpleSAMLphp from the project's release tarball
-RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.4.0/simplesamlphp-2.4.0-full.tar.gz" \
+RUN curl -L "https://github.com/simplesamlphp/simplesamlphp/releases/download/v2.5.4/simplesamlphp-2.5.4-full.tar.gz" \
     | tar -xvz -C /var/www/simplesaml --strip-components=1
 COPY ./modules/ /var/www/simplesaml/my-modules/
 # The openconext module (OpenConext theme + username-only authsource of the IdPs) must live in
@@ -20,6 +20,7 @@ COPY ./sspconf/ /var/www/simplesaml/config/
 COPY ./sspattributemap/Openconext_short_to_urn.php /var/www/simplesaml/attributemap/
 COPY ./conf/000-default.conf /etc/apache2/sites-enabled/
 
+RUN mkdir -p /var/log/devssp && chmod 1777 /var/log/devssp
 RUN mkdir -p /var/www/simplesaml/data
 RUN chown -R www-data:www-data /var/www/simplesaml/data
 
