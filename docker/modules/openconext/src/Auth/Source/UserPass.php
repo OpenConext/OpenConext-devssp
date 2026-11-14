@@ -32,6 +32,14 @@ class UserPass extends UserPassBase
      */
     private array $users = [];
 
+    /**
+     * Usernames that are not offered in the username list on the login page (option 'datalist.hide').
+     * These can still log in.
+     *
+     * @var list<string>
+     */
+    private array $hiddenUsernames = [];
+
 
     /**
      * Constructor for this authentication source.
@@ -43,6 +51,12 @@ class UserPass extends UserPassBase
     {
         // Call the parent constructor first, as required by the interface
         parent::__construct($info, $config);
+
+        $hidden = $config['datalist.hide'] ?? [];
+        if (!is_array($hidden)) {
+            throw new Exception("Option 'datalist.hide' of authentication source " . $this->authId . ' must be an array');
+        }
+        $this->hiddenUsernames = array_values(array_map('strval', $hidden));
 
         // Validate and parse our configuration. The class name at key 0 has already
         // been removed by \SimpleSAML\Auth\Source::parseAuthSource().
@@ -64,6 +78,23 @@ class UserPass extends UserPassBase
             }
             $this->users[$username] = $attributes;
         }
+    }
+
+
+    /**
+     * The usernames that can log in, for the datalist on the login page (see the TemplateController of this
+     * module). Without the special 'cancel' account, which is used by the Cancel button, and without the
+     * usernames in the 'datalist.hide' option.
+     *
+     * @return list<string>
+     */
+    public function getUsernames(): array
+    {
+        $hidden = array_merge(['cancel'], $this->hiddenUsernames);
+        return array_values(array_filter(
+            array_map('strval', array_keys($this->users)),
+            static fn (string $u): bool => !in_array($u, $hidden, true)
+        ));
     }
 
 

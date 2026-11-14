@@ -198,9 +198,15 @@ $slugs=array(
 // for a username 'joe' this will generate joe-b1, joe-b2, ..., joe-b-yk, ... joe-b-raa
 // ...
 // For all accounts the username is equal to the password. E.g. "joe-a1" / "joe-a1"
+$dev_domain_accounts = array();
 foreach ($accounts as $user => $email) {
+    // The accounts for the dev.openconext.local domain (e.g. joe-1, joe--ra) are used by the Stepup Behat tests
+    // in OpenConext-devconf. Remember them, to keep them out of the username list on the login page.
+    $before = array_keys($config['example-userpass']);
     //                   username   , email,  schachomeorganization
     account_gen($config, "{$user}-",  $email, 'dev.openconext.local', $slugs);
+    $dev_domain_accounts = array_merge($dev_domain_accounts, array_diff(array_keys($config['example-userpass']), $before));
+
     account_gen($config, "{$user}-a", $email, 'institution-a.example.com', $slugs);
     account_gen($config, "{$user}-b", $email, 'institution-b.example.com', $slugs);
     account_gen($config, "{$user}-c", $email, 'institution-c.example.com', $slugs);
@@ -208,6 +214,14 @@ foreach ($accounts as $user => $email) {
     account_gen($config, "{$user}-e", $email, 'Institution-e.example.com', $slugs);
     account_gen($config, "{$user}-f", $email, 'Institution-f.example.com', $slugs);
 }
+
+// Usernames that can log in, but that are not offered in the username list (datalist) on the login page
+// (see docker/modules/openconext/src/Auth/Source/UserPass.php). The entra-mock-userpass authsource below
+// copies this option.
+$config['example-userpass']['datalist.hide'] = array_map(
+    function ($userpass) { return explode(':', $userpass, 2)[0]; },
+    $dev_domain_accounts
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Authentication source for the EntraID mock IdP (see saml20-idp-hosted.php).

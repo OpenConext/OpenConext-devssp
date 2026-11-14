@@ -46,21 +46,26 @@ final class EntraMockIdpTest extends FunctionalTestCase
     {
         $page = $this->loginViaSp(['idp' => self::ENTRA_IDP], 'jane-a2', cancel: true);
 
-        self::assertSame('Responder', self::lastPart(self::labelValue($page, 'StatusCode:')), $this->browser->trail());
-        self::assertSame('AuthnFailed', self::lastPart(self::labelValue($page, 'SubStatusCode:')));
-        self::assertSame('Authentication cancelled by user', self::labelValue($page, 'StatusMessage:'));
-        self::assertSame(self::ENTRA_IDP, self::labelValue($page, 'Issuer:'));
+        self::assertSame('Responder', self::lastPart(self::tableValue($page, 'SAML Error Status', 'StatusCode')), $this->browser->trail());
+        self::assertSame('AuthnFailed', self::lastPart(self::tableValue($page, 'SAML Error Status', 'SubStatusCode')));
+        self::assertSame('Authentication cancelled by user', self::tableValue($page, 'SAML Error Status', 'StatusMessage'));
+        self::assertSame(self::ENTRA_IDP, self::tableValue($page, 'SAML Error Status', 'Issuer'));
         self::assertCount(0, $page->filter('form#logout'), 'Not logged in');
+
+        // The XML of the response is at the end of the page, after the advanced options
+        self::assertCount(1, $page->filterXPath("//h3[normalize-space(.)='Advanced options']/following::h3[normalize-space(.)='SAML Response XML']"));
+        self::assertSame($this->browser->samlMessages('Response')[0]->xml, $page->filter('#saml-xml-verbatim')->text(normalizeWhitespace: false));
 
         // The error is shown once
         $page = $this->browser->get(self::SP_PATH);
-        self::assertNull(self::labelValue($page, 'StatusCode:'));
+        self::assertNull(self::tableValue($page, 'SAML Error Status', 'StatusCode'));
+        self::assertCount(0, $page->filter('#saml-xml-verbatim'));
     }
 
     public function testCancelAtLocalIdp(): void
     {
         $page = $this->loginViaSp(['idp' => self::LOCAL_IDP], 'jane-a1', cancel: true);
-        self::assertSame('AuthnFailed', self::lastPart(self::labelValue($page, 'SubStatusCode:')), $this->browser->trail());
+        self::assertSame('AuthnFailed', self::lastPart(self::tableValue($page, 'SAML Error Status', 'SubStatusCode')), $this->browser->trail());
     }
 
     /** The mock IdP uses its own authsource, so a session at the local IdP is not used there */

@@ -39,6 +39,106 @@ final class LocalIdpLoginTest extends FunctionalTestCase
         self::assertNotSame('', $responses[0]->value('/samlp:Response/saml:Assertion/ds:Signature/ds:SignatureValue'), 'Assertion is signed');
     }
 
+    /** The Test SP shows the SAML Response it received, as captured by the ACS of the debugsp module */
+    public function testShowsReceivedSamlResponse(): void
+    {
+        $page = $this->loginViaSp(['idp' => self::LOCAL_IDP, 'sp' => 'third-sp'], 'jane-a1');
+        $this->assertLoggedIn($page, 'third-sp', self::LOCAL_IDP);
+        $response = $this->browser->samlMessages('Response')[0];
+
+        self::assertCount(1, $page->filterXPath("//h3[normalize-space(.)='SAML Response']"));
+        self::assertSame($response->value('/samlp:Response/@ID'), self::tableValue($page, 'Response', 'ID'));
+        self::assertSame(self::LOCAL_IDP, self::tableValue($page, 'Response', 'Issuer'));
+        self::assertSame('urn:oasis:names:tc:SAML:2.0:status:Success', self::tableValue($page, 'Response', 'StatusCode'));
+        self::assertSame(self::spEntityId('third-sp'), self::tableValue($page, 'Assertion', 'Audience'));
+        self::assertSame(
+            $response->value('/samlp:Response/saml:Assertion/saml:AuthnStatement/@SessionIndex'),
+            self::tableValue($page, 'Assertion', 'SessionIndex')
+        );
+
+        // Verbatim: exactly the XML the IdP sent
+        self::assertSame($response->xml, $page->filter('#saml-xml-verbatim')->text(normalizeWhitespace: false));
+
+        // IDs and timestamps get a background color derived from their value, the same color in the tables
+        // and in the pretty-printed XML. A reference to an ID ("#ID") gets the color of the ID.
+        $xmlColors = [];
+        $page->filter('#saml-xml-pretty span')->each(static function ($span) use (&$xmlColors): void {
+            $xmlColors[$span->text()][] = $span->attr('style');
+        });
+        $assertionId = $response->value('/samlp:Response/saml:Assertion/@ID');
+        foreach ([
+            ['Response', 'ID', [$response->value('/samlp:Response/@ID')]],
+            ['Response', 'InResponseTo', [$response->value('/samlp:Response/@InResponseTo')]],
+            ['Response', 'IssueInstant', [$response->value('/samlp:Response/@IssueInstant')]],
+            ['Assertion', 'Assertion ID', [$assertionId, "#$assertionId"]],
+            ['Assertion', 'SessionIndex', [$response->value('/samlp:Response/saml:Assertion/saml:AuthnStatement/@SessionIndex')]],
+            ['Assertion', 'Conditions NotOnOrAfter', [$response->value('/samlp:Response/saml:Assertion/saml:Conditions/@NotOnOrAfter')]],
+        ] as [$heading, $field, $xmlValues]) {
+            $style = $page->filterXPath(
+                "//h4[normalize-space(.)='$heading']/following-sibling::div[1]//tr[td[1][normalize-space(.)='$field']]/td[2]/code"
+            )->attr('style');
+            self::assertStringStartsWith('background-color: #', (string) $style, "$field has a color");
+            foreach ($xmlValues as $xmlValue) {
+                self::assertContains($style, $xmlColors[$xmlValue] ?? [], "$xmlValue has the color of $field in the XML");
+            }
+        }
+        // Other values are not colored
+        self::assertArrayNotHasKey(self::spEntityId('third-sp'), $xmlColors);
+
+        // Shown while logged in, also on later visits
+        $page = $this->browser->get(self::SP_PATH . '?sp=third-sp');
+        self::assertCount(1, $page->filter('#saml-xml-verbatim'));
+    }
+
+    public function testNoSamlResponseShownWhenNotLoggedIn(): void
+    {
+        $page = $this->browser->get(self::SP_PATH);
+        self::assertCount(0, $page->filterXPath("//h3[normalize-space(.)='SAML Response']"));
+
+        $this->loginViaSp(['idp' => self::LOCAL_IDP], 'jane-a1');
+        $this->browser->submit($this->browser->get(self::SP_PATH)->filter('form#logout button[value="logout"]')->form());
+        $page = $this->browser->settle();
+        self::assertCount(0, $page->filterXPath("//h3[normalize-space(.)='SAML Response']"), 'Not shown after logout');
+    }
+
+    public static function idps(): iterable
+    {
+        yield 'local IdP' => [self::LOCAL_IDP];
+        yield 'EntraID mock IdP' => [self::ENTRA_IDP];
+    }
+
+    /** The login page offers the usernames that can log in in a datalist on the username field */
+    #[DataProvider('idps')]
+    public function testLoginPageOffersUsernames(string $idp): void
+    {
+        $page = $this->loginViaSp(['idp' => $idp], null);
+        self::assertCount(1, $this->browser->filterLoginForm(), $this->browser->trail());
+
+        $listId = $page->filter('input#username')->attr('list');
+        self::assertNotEmpty($listId, 'The username field has a datalist');
+        $usernames = $page->filter("datalist#$listId option")->each(static fn ($o): string => $o->attr('value'));
+        foreach (['admin', 'jane-a1', 'joe-b2', 'user-f-raa', 'jane-a-nosho'] as $username) {
+            self::assertContains($username, $usernames);
+        }
+        self::assertNotContains('cancel', $usernames, 'The special cancel account is not offered');
+        // The accounts of the dev.openconext.local domain (used by the Stepup Behat tests) are not offered
+        foreach (['jane-1', 'joe-5', 'joe--ra', 'joe--raa', 'user--sms', 'jane--nosho'] as $username) {
+            self::assertNotContains($username, $usernames);
+        }
+        self::assertSame(array_unique($usernames), $usernames);
+    }
+
+    /** The accounts of the dev.openconext.local domain are not in the datalist, but can still log in */
+    #[DataProvider('idps')]
+    public function testHiddenDevDomainAccountCanLogIn(string $idp): void
+    {
+        $page = $this->loginViaSp(['idp' => $idp], 'joe--ra');
+
+        $this->assertLoggedIn($page, 'default-sp', $idp);
+        self::assertSame(['joe--ra'], self::attributes($page)['urn:mace:dir:attribute-def:uid'] ?? null);
+        self::assertSame(['dev.openconext.local'], self::attributes($page)['urn:mace:terena.org:attribute-def:schacHomeOrganization'] ?? null);
+    }
+
     public function testLoginAsAdmin(): void
     {
         $page = $this->loginViaSp(['idp' => self::LOCAL_IDP], 'admin');

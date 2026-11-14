@@ -41,16 +41,22 @@ class ServiceProvider extends \SimpleSAML\Module\saml\Controller\ServiceProvider
             $_POST['SAMLResponse'] = $_POST['_SAMLResponse'];
         }
 
+        // Store the SAML Response as received (verbatim) in the session, so the Test SP (sp.php) can show it.
+        // This saves a trip to the SAML tracer browser plugin.
+        $samlResponse = self::parseSamlResponse();
+        if ($samlResponse === null) {
+            // Let parent handle the request (and the error)
+            return parent::assertionConsumerService($sourceId);
+        }
+        $session = Session::getSessionFromRequest();
+        $session->setData('array', 'DEBUGSP_SAML_RESPONSE', $samlResponse);
+
         // Intercept SAML error responses (e.g. the Responder / AuthnFailed response that the EntraID mock
         // IdP returns when the user presses Cancel at the login page). Instead of letting SimpleSAMLphp
-        // handle the error (which results in an SSP error page), store the response in the session and
-        // redirect back to the Test SP (sp.php), which shows a "SAML Error Status" section with the
-        // details and the full XML of the response.
-        $samlError = self::parseSamlErrorResponse();
-        if ($samlError !== null) {
-            Logger::info('debugsp: received SAML error response, storing it in the session and redirecting to the Test SP');
-            $session = Session::getSessionFromRequest();
-            $session->setData('array', 'DEBUGSP_SAML_ERROR', $samlError);
+        // handle the error (which results in an SSP error page), redirect back to the Test SP (sp.php),
+        // which shows a "SAML Error Status" section with the details and the XML of the response.
+        if ($samlResponse['StatusCode'] !== '' && $samlResponse['StatusCode'] !== \SAML2\Constants::STATUS_SUCCESS) {
+            Logger::info('debugsp: received SAML error response, redirecting to the Test SP');
 
             $httpUtils = new HTTP();
             $relayState = $_REQUEST['RelayState'] ?? null;
@@ -68,13 +74,13 @@ class ServiceProvider extends \SimpleSAML\Module\saml\Controller\ServiceProvider
     }
 
     /**
-     * Parse the raw SAMLResponse of the current request. When it is a SAML 2.0 Response with a
-     * top-level StatusCode other than Success, return an array with the error details and the
-     * full XML of the response. Return null when the request carries no (error) response.
+     * Parse the raw SAMLResponse of the current request. Returns an array with the main fields of the
+     * response and its assertion, and the XML of the response as received ('xml').
+     * Returns null when the request carries no SAML 2.0 Response.
      *
      * @return array|null
      */
-    private static function parseSamlErrorResponse(): ?array
+    private static function parseSamlResponse(): ?array
     {
         $encoded = $_POST['SAMLResponse'] ?? $_GET['SAMLResponse'] ?? null;
         if (!is_string($encoded) || $encoded === '') {
@@ -100,23 +106,31 @@ class ServiceProvider extends \SimpleSAML\Module\saml\Controller\ServiceProvider
         $xpath->registerNamespace('samlp', 'urn:oasis:names:tc:SAML:2.0:protocol');
         $xpath->registerNamespace('saml', 'urn:oasis:names:tc:SAML:2.0:assertion');
 
-        $statusCode = $xpath->evaluate('string(/samlp:Response/samlp:Status/samlp:StatusCode/@Value)');
-        if ($statusCode === '' || $statusCode === \SAML2\Constants::STATUS_SUCCESS) {
-            return null; // not an error response
+        if ($xpath->query('/samlp:Response')->length !== 1) {
+            return null; // not a SAML 2.0 Response
         }
 
-        $subStatusCode = $xpath->evaluate('string(/samlp:Response/samlp:Status/samlp:StatusCode/samlp:StatusCode/@Value)');
-        $statusMessage = $xpath->evaluate('string(/samlp:Response/samlp:Status/samlp:StatusMessage)');
+        $value = static fn (string $expression): string => (string) $xpath->evaluate("string($expression)");
+        $assertion = '/samlp:Response/saml:Assertion';
 
         return [
-            'ID' => $xpath->evaluate('string(/samlp:Response/@ID)'),
-            'InResponseTo' => $xpath->evaluate('string(/samlp:Response/@InResponseTo)'),
-            'IssueInstant' => $xpath->evaluate('string(/samlp:Response/@IssueInstant)'),
-            'Destination' => $xpath->evaluate('string(/samlp:Response/@Destination)'),
-            'Issuer' => $xpath->evaluate('string(/samlp:Response/saml:Issuer)'),
-            'StatusCode' => $statusCode,
-            'SubStatusCode' => $subStatusCode,
-            'StatusMessage' => $statusMessage,
+            'ID' => $value('/samlp:Response/@ID'),
+            'InResponseTo' => $value('/samlp:Response/@InResponseTo'),
+            'IssueInstant' => $value('/samlp:Response/@IssueInstant'),
+            'Destination' => $value('/samlp:Response/@Destination'),
+            'Issuer' => $value('/samlp:Response/saml:Issuer'),
+            'StatusCode' => $value('/samlp:Response/samlp:Status/samlp:StatusCode/@Value'),
+            'SubStatusCode' => $value('/samlp:Response/samlp:Status/samlp:StatusCode/samlp:StatusCode/@Value'),
+            'StatusMessage' => $value('/samlp:Response/samlp:Status/samlp:StatusMessage'),
+            'EncryptedAssertion' => $xpath->query('/samlp:Response/saml:EncryptedAssertion')->length > 0 ? 'yes' : '',
+            'Assertion ID' => $value("$assertion/@ID"),
+            'Assertion IssueInstant' => $value("$assertion/@IssueInstant"),
+            'Conditions NotBefore' => $value("$assertion/saml:Conditions/@NotBefore"),
+            'Conditions NotOnOrAfter' => $value("$assertion/saml:Conditions/@NotOnOrAfter"),
+            'Audience' => $value("$assertion/saml:Conditions/saml:AudienceRestriction/saml:Audience"),
+            'AuthnInstant' => $value("$assertion/saml:AuthnStatement/@AuthnInstant"),
+            'SessionNotOnOrAfter' => $value("$assertion/saml:AuthnStatement/@SessionNotOnOrAfter"),
+            'SessionIndex' => $value("$assertion/saml:AuthnStatement/@SessionIndex"),
             'xml' => $xml,
         ];
     }

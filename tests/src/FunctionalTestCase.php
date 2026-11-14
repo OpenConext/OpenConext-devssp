@@ -112,6 +112,19 @@ abstract class FunctionalTestCase extends TestCase
     }
 
     /**
+     * Value of a field in the Field / Value table below a (h3 or h4) heading on the Test SP page, e.g. in
+     * "SAML Error Status", or "Response" and "Assertion" of the "SAML Response" section.
+     * Returns null when the field (or the table) is not on the page.
+     */
+    protected static function tableValue(Crawler $page, string $heading, string $field): ?string
+    {
+        $code = $page->filterXPath(
+            "//*[self::h3 or self::h4][normalize-space(.)='$heading']/following-sibling::div[1]//tr[td[1][normalize-space(.)='$field']]/td[2]/code"
+        );
+        return $code->count() > 0 ? trim($code->first()->text()) : null;
+    }
+
+    /**
      * The NameID shown on the Test SP page
      *
      * @return array{Format: ?string, Value: ?string}

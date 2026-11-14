@@ -70,17 +70,100 @@ function HTMLColorFingerprint($value)
 }
 
 
-function XMLTextNode2HTML_TS($domnode)
+/**
+ * Show fields of a SAML Response that was captured by the ACS of the debugsp module
+ * (see docker/modules/debugsp/src/Controller/ServiceProvider.php) in a Field / Value table, like the
+ * attributes. Empty fields are skipped. Timestamps are shown with their offset to the current time.
+ */
+function SAMLResponseFieldsToTable(array $samlResponse, array $fields)
 {
-    if (!is_null($domnode) && isset($domnode[0])) {
-        $time = SimpleSAML_Utilities::parseSAML2Time($domnode[0]->textContent);
-        $offset = $time - time();
-        $str = '<b>'.gmdate('r', $time).'</b>';
-        $str .= ' (now '. (($offset>0) ? '+':'') . round(($offset/60)) . ' minutes)';
-        return $str;
+    echo "<div>\n<table class='saml-fields'>\n<tr><th>Field</th><th>Value</th></tr>\n";
+    foreach ($fields as $field) {
+        if (!isset($samlResponse[$field]) || $samlResponse[$field] === '') {
+            continue;
+        }
+        $value = $samlResponse[$field];
+        $style = SAMLFieldIsFingerprinted($field) ? " style='background-color: " . HTMLColorFingerprint($value) . "'" : '';
+        $extra = SAMLTimeOffsetToHTML($field, $value);
+        echo "<tr><td>" . htmlentities($field) . "</td><td><code{$style}>" . htmlentities($value) . "</code>{$extra}</td></tr>\n";
     }
+    echo "</table>\n</div>\n";
+}
 
-    return '<i>N/A</i>';
+
+/**
+ * Whether the value of a SAML Response field gets a background color derived from the value
+ * (HTMLColorFingerprint()), so it is easy to spot where the same value is used: IDs and timestamps
+ */
+function SAMLFieldIsFingerprinted(string $field): bool
+{
+    return in_array($field, array('ID', 'InResponseTo', 'Assertion ID', 'SessionIndex'), true)
+        || preg_match('/(Instant|NotBefore|NotOnOrAfter)$/', $field) === 1;
+}
+
+
+/** For a SAML timestamp field: its offset to the current time, e.g. " (now +5 minutes)". '' for other fields. */
+function SAMLTimeOffsetToHTML(string $field, string $value): string
+{
+    if (!preg_match('/(Instant|NotBefore|NotOnOrAfter)$/', $field)) {
+        return '';
+    }
+    $time = strtotime($value);
+    if ($time === false) {
+        return '';
+    }
+    $minutes = (int) round(($time - time()) / 60);
+    return '<small>&nbsp;(now ' . ($minutes > 0 ? '+' : '') . $minutes . ' minutes)</small>';
+}
+
+
+/**
+ * Show the XML of a SAML Response captured by the debugsp module: pretty-printed for readability, and
+ * verbatim (as received) in a collapsed section, because the pretty-printed version is not the signed XML.
+ *
+ * In the pretty-printed XML, attribute values and element texts that are equal to the value of a
+ * fingerprinted field (see SAMLFieldIsFingerprinted()) get the same background color as in the tables.
+ * A reference to an ID ("#" + ID, e.g. in ds:Reference/@URI) gets the color of the ID.
+ */
+function SAMLResponseXMLToHTML(array $samlResponse)
+{
+    $xml = $samlResponse['xml'];
+
+    $colors = array();  // value => color
+    foreach ($samlResponse as $field => $value) {
+        if (is_string($value) && $value !== '' && SAMLFieldIsFingerprinted($field)) {
+            $colors[$value] = HTMLColorFingerprint($value);
+        }
+    }
+    $highlight = static function (string $escapedValue) use ($colors): string {
+        $value = html_entity_decode($escapedValue, ENT_QUOTES | ENT_HTML401);
+        $id = str_starts_with($value, '#') ? substr($value, 1) : $value;
+        if (!isset($colors[$id])) {
+            return $escapedValue;
+        }
+        return "<span style='background-color: {$colors[$id]}'>{$escapedValue}</span>";
+    };
+
+    $doc = new DOMDocument();
+    $doc->preserveWhiteSpace = false;
+    $doc->formatOutput = true;
+    if (@$doc->loadXML($xml)) {
+        $html = htmlentities($doc->saveXML($doc->documentElement));
+        // Attribute values: name="value". Only whole values match, values with entities (&) are skipped.
+        $html = preg_replace_callback(
+            '/(=&quot;)([^&]+)(&quot;)/',
+            static fn (array $m): string => $m[1] . $highlight($m[2]) . $m[3],
+            $html
+        );
+        // Element text: <element>value</element>
+        $html = preg_replace_callback(
+            '/(&gt;)([^&\n]+)(&lt;\/)/',
+            static fn (array $m): string => $m[1] . $highlight($m[2]) . $m[3],
+            $html
+        );
+        echo "<pre class='saml-xml' id='saml-xml-pretty'>{$html}</pre>\n";
+    }
+    echo "<details><summary>Verbatim XML (as received)</summary><pre class='saml-xml' id='saml-xml-verbatim'>" . htmlentities($xml) . "</pre></details>\n";
 }
 
 
@@ -122,14 +205,6 @@ function AttributeNameToHTML($attribute) {
 }
 
 
-function XMLTextNode2HTML($domnode)
-{
-    if (!is_null($domnode) && isset($domnode[0])) {
-        return '<b>'.htmlentities($domnode[0]->textContent).'</b>';
-    }
-
-    return '<i>N/A</i>';
-}
 
 
 function HTML_select($label, $id, $options, $value="", $info="")

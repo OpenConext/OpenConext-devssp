@@ -908,7 +908,8 @@ $config = [
      * the 'theme.controller' configuration option to a class that implements the
      * \SimpleSAML\XHTML\TemplateControllerInterface interface to use it.
      */
-    //'theme.controller' => '',
+    // Adds the usernames for the datalist on the login page of the openconext:UserPass authsource
+    'theme.controller' => \SimpleSAML\Module\openconext\TemplateController::class,
 
     /*
      * Templating options

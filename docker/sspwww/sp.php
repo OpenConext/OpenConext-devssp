@@ -141,12 +141,8 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'login' ) {
     if ( (isset($_REQUEST['forceauthn'])) && ($_REQUEST['forceauthn'] == 'true') )
         $bForceAuthn = true;
 
-    // For use by SAML2Keeper callback function
-    $session->setData('string', 'SAML2Keeper_ReturnTo', $returnURL);
-
     $context = array(
         'ReturnTo' => $returnURL,
-        'ReturnCallback' => array('sspmod_saml2keeper_SAML2Keeper','loginCallback'),
         'ForceAuthn' => $bForceAuthn,
         'saml:NameIDPolicy' => null,
     );
@@ -368,7 +364,7 @@ echo <<<head
 		    h1,h2,h3,h4 {background-color: lightgray; padding: 2px 10px; border-top: 1px solid; border-bottom: 1px solid; clear: both}
 		    table { border-collapse: collapse}
 		    table,th,td {border: 1px solid black}
-		    th,td {padding 1px; font-size: 12px}
+		    th,td {padding: 2px 6px; font-size: 12px}
 		    label {width:220px; font-size: 14px; margin-right: 10px; display: inline-block; float: left; text-align: right}
 		    code {display: inline-block; max-width: 600px; float: left; margin-top: 2px;}
 		    small {display: inline-block; max-width: 600px; float: left}
@@ -377,6 +373,11 @@ echo <<<head
 		    button.login {background-color: darkseagreen}
 		    button.logout {background-color: indianred}
 		    select {min-width: 150px; font-size: 14px;}
+		    table.saml-fields td code, table.saml-fields td small {float: none; vertical-align: baseline; margin-top: 0}
+		    table.saml-fields td code {max-width: none}
+		    pre.saml-xml span {padding: 0 2px}
+		    pre.saml-xml {white-space: pre-wrap; word-break: break-all; font-size: 12px; margin: 10px; padding: 5px; background-color: #f6f6f6; border: 1px solid lightgray}
+		    details {margin: 10px}
         </style>
 		<title>simpleSAMLphp Test SP</title>
 	</head>
@@ -491,25 +492,23 @@ echo <<<html
                </p>
 html;
 
+// The last SAML Response that the SP received, as received. It is stored in the session by the ACS of
+// the debugsp module (see docker/modules/debugsp) before SimpleSAMLphp processes it.
+$samlResponse = $session->getData('array', 'DEBUGSP_SAML_RESPONSE');
+if (!is_array($samlResponse)) {
+    $samlResponse = null;
+}
+$samlResponseIsError = $samlResponse !== null && $samlResponse['StatusCode'] !== ''
+    && $samlResponse['StatusCode'] !== 'urn:oasis:names:tc:SAML:2.0:status:Success';
+
 // SAML Error Status: shown when the IdP returned a SAML error response (e.g. the Responder /
-// AuthnFailed response when the user presses Cancel at the EntraID mock IdP). The response is
-// stored in the session by the debugsp module's ACS (see docker/modules/debugsp), which stops
-// SimpleSAMLphp from handling the SAML error itself.
-$samlError = $session->getData('array', 'DEBUGSP_SAML_ERROR');
-if (is_array($samlError)) {
-    $session->deleteData('array', 'DEBUGSP_SAML_ERROR');  // show it only once
+// AuthnFailed response when the user presses Cancel at the EntraID mock IdP). The debugsp module's ACS
+// stops SimpleSAMLphp from handling the SAML error itself and redirects back here.
+if ($samlResponseIsError) {
+    $session->deleteData('array', 'DEBUGSP_SAML_RESPONSE');  // show it only once
     echo "<h3>SAML Error Status</h3>\n";
-    echo "<p>\n";
-    foreach (array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode', 'SubStatusCode', 'StatusMessage') as $field) {
-        if (isset($samlError[$field]) && $samlError[$field] !== '') {
-            echo "<label>" . htmlentities($field) . ":</label><code>" . htmlentities($samlError[$field]) . "</code><br />\n";
-        }
-    }
-    echo "</p>\n";
-    if (isset($samlError['xml'])) {
-        echo "<h4>SAML Response XML</h4>\n";
-        echo "<pre>" . htmlentities($samlError['xml']) . "</pre>\n";
-    }
+    SAMLResponseFieldsToTable($samlResponse, array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode', 'SubStatusCode', 'StatusMessage'));
+    // The XML of the response is shown at the end of the page
 }
 
 echo <<<html
@@ -696,44 +695,26 @@ echo <<<html
         </form>
 html;
 
-$SAMLResponse = $session->getData('string', 'SAML2Keeper_SAMLResponse');
-if ($SAMLResponse)
-{
-    echo '<h3>SAMLResponse</h3>';
-    $SAMLResponse = base64_decode($SAMLResponse);
-    if (false !== $SAMLResponse)
-    {
-        $document = new DOMDocument();
-        $document->loadXML($SAMLResponse);
-        $xml = $document->firstChild;
+// The XML of the SAML error response (see "SAML Error Status" above)
+if ($samlResponseIsError) {
+    echo "<h3>SAML Response XML</h3>\n";
+    SAMLResponseXMLToHTML($samlResponse);
+}
 
-        //$msg = new SAML2_Response($xml);
-        $response_IssueInstant = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/@IssueInstant');
-        $assertion_IssueInstant = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/@IssueInstant');
-        $condition_NotBefore = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:Conditions/@NotBefore');
-        $condition_NotOnOrAfter = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:Conditions/@NotOnOrAfter');
-        $audience_Restriction = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:Conditions/saml_assertion:AudienceRestriction/saml:Audience');
-        $assertion_AuthnInstant = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:AuthnStatement/@AuthnInstant');
-        $SessionNotOnOrAfter = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:AuthnStatement/@SessionNotOnOrAfter');
-        $SessionIndex = SAML2_Utils::xpQuery($xml, '/saml_protocol:Response/saml_assertion:Assertion/saml_assertion:AuthnStatement/@SessionIndex' );
-        echo "<h4>Response</h4>";
-        echo "IssueInstant: ".XMLTextNode2HTML_TS($response_IssueInstant)."<br />";
-        echo "<h4>Assertion</h4>";
-        echo "IssueInstant: ".XMLTextNode2HTML_TS($assertion_IssueInstant)."<br />";
-        echo "Condition NotBefore: ".XMLTextNode2HTML_TS($condition_NotBefore)."<br />";
-        echo "Condition NotOnOrAfter: ".XMLTextNode2HTML_TS($condition_NotOnOrAfter)."<br />";
-        echo "AudienceRestriction: ".XMLTextNode2HTML($audience_Restriction)."<br />";
-        echo "AuthnInstant: ".XMLTextNode2HTML_TS($assertion_AuthnInstant)."<br />";
-        echo "SessionNotOnOrAfter: ".XMLTextNode2HTML_TS($SessionNotOnOrAfter)."<br />";
-        echo "SessionIndex: ".XMLTextNode2HTML($SessionIndex)."<br />";
-        echo '<pre>';
-        echo htmlentities($SAMLResponse);
-        echo '</pre>';
+// The last (non error) SAML Response that the SP received, while logged in.
+// This saves a trip to the SAML tracer browser plugin.
+if ($bIsAuthenticated && $samlResponse !== null && !$samlResponseIsError) {
+    echo "<h3>SAML Response</h3>\n";
+    echo "<h4>Response</h4>\n";
+    SAMLResponseFieldsToTable($samlResponse, array('ID', 'InResponseTo', 'IssueInstant', 'Destination', 'Issuer', 'StatusCode'));
+    echo "<h4>Assertion</h4>\n";
+    if (($samlResponse['EncryptedAssertion'] ?? '') !== '') {
+        echo "<p>The assertion is encrypted.</p>\n";
+    } else {
+        SAMLResponseFieldsToTable($samlResponse, array('Assertion ID', 'Assertion IssueInstant', 'Conditions NotBefore', 'Conditions NotOnOrAfter', 'Audience', 'AuthnInstant', 'SessionNotOnOrAfter', 'SessionIndex'));
     }
-    else
-    {
-        echo 'Error decoding SAMLResponse (invalid base64)<br />';
-    }
+    echo "<h4>SAML Response XML</h4>\n";
+    SAMLResponseXMLToHTML($samlResponse);
 }
 
 echo <<<html

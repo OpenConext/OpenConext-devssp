@@ -53,7 +53,14 @@
                     <label for="username">{{ 'Username'|trans }}</label>
                     <input id="username" {{ forceUsername ? 'disabled autocomplete="off"' }} placeholder="{{ username }}" type="text" name="username" class="edge"
             {%- if not forceUsername %} tabindex="1" value="{{ username }}" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" {% endif %}
+            {%- if usernames is defined and usernames and not forceUsername %} list="usernames"{% endif %}
             {%- if not forceUsername and not username %} autofocus {% endif %} >
+                {# The usernames that can log in, to help find them (added by the TemplateController of the openconext module) #}
+                {% if usernames is defined and usernames and not forceUsername -%}
+                <datalist id="usernames">
+                    {% for name in usernames %}<option value="{{ name }}"></option>{% endfor %}
+                </datalist>
+                {% endif -%}
                 {% if rememberUsernameEnabled and not forceUsername -%}
                 </div>
                 <div class="pure-controls">

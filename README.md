@@ -71,8 +71,12 @@ accepted by the mock. Note:
   AzureMFA does. The mock ignores it.
 - When the IdP returns a SAML error response (e.g. press Cancel on the mock's login page), the Test SP does not show
   the SimpleSAMLphp error page: the `debugsp` module's ACS (`docker/modules/debugsp`) intercepts the error response,
-  stores it in the session and redirects back to `sp.php`, which shows a "SAML Error Status" section (after
-  "Login (again)", before "Advanced options") with the status codes, message and the full XML of the response.
+  stores it in the session and redirects back to `sp.php`, which shows a "SAML Error Status" table (after
+  "Login (again)", before "Advanced options") with the status codes and message, and the full XML of the response
+  in a "SAML Response XML" section at the end of the page.
+- For any other response, `sp.php` shows the last SAML Response it received in a "SAML Response" section at the
+  bottom of the page while you are logged in: the main fields of the response and the assertion (timestamps relative to
+  now), the pretty-printed XML and the verbatim XML as received. This saves a trip to the SAML tracer browser plugin.
 
 ## Key material
 
