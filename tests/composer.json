@@ -1,0 +1,30 @@
+{
+  "name": "openconext/devssp-functional-tests",
+  "description": "Functional tests for the OpenConext devssp container: drives the Test SP (sp.php), the IdPs and the tools like a browser would",
+  "license": "Apache-2.0",
+  "type": "project",
+  "require": {
+    "php": ">=8.3",
+    "ext-dom": "*",
+    "ext-zlib": "*",
+    "phpunit/phpunit": "^12.4",
+    "symfony/browser-kit": "^7.4",
+    "symfony/css-selector": "^7.4",
+    "symfony/dom-crawler": "^7.4",
+    "symfony/http-client": "^7.4",
+    "symfony/mime": "^7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenConext\\DevSsp\\Tests\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "OpenConext\\DevSsp\\Tests\\Functional\\": "functional/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

@@ -17,8 +17,12 @@ $config = array(
         'core:AdminPassword',
     ),
 
+    // The main IdP authsource. It uses the 'openconext:UserPass' class (see
+    // docker/modules/openconext), which only needs the username: the password part of
+    // the 'username:password' account entries below is ignored and the login page has
+    // no password field (see the 'openconext:openconext' theme).
     'example-userpass' => array(
-        'exampleauth:UserPass',
+        'openconext:UserPass',
 
         'admin:admin' => array(
             'NameID' => 'urn:collab:person:dev.openconext.local:admin',
@@ -32,6 +36,18 @@ $config = array(
             'eduPersonAffiliation' => array('employee'),
             'schacHomeOrganization' => 'dev.openconext.local',
             'schacHomeOrganizationType' => 'urn:mace:terena.org:schac:homeOrganizationType:int:university',
+        ),
+
+        // The special account "cancel" simulates a user cancelling the authentication:
+        // the Cancel button on the login page submits this username, and the cancel
+        // authproc filter of the IdP (see saml20-idp-hosted.php) returns a SAML error
+        // response (Responder / AuthnFailed) to the SP for it.
+        'cancel:cancel' => array(
+            'NameID' => 'urn:collab:person:dev.openconext.local:cancel',
+            'uid' => array('cancel'),
+            'mail' => 'cancel@dev.openconext.local',
+            'eduPersonPrincipalName' => 'cancel@dev.openconext.local',
+            'schacHomeOrganization' => 'dev.openconext.local',
         ),
 
         // Test accounts are added using account_gen below
@@ -182,9 +198,15 @@ $slugs=array(
 // for a username 'joe' this will generate joe-b1, joe-b2, ..., joe-b-yk, ... joe-b-raa
 // ...
 // For all accounts the username is equal to the password. E.g. "joe-a1" / "joe-a1"
+$dev_domain_accounts = array();
 foreach ($accounts as $user => $email) {
+    // The accounts for the dev.openconext.local domain (e.g. joe-1, joe--ra) are used by the Stepup Behat tests
+    // in OpenConext-devconf. Remember them, to keep them out of the username list on the login page.
+    $before = array_keys($config['example-userpass']);
     //                   username   , email,  schachomeorganization
     account_gen($config, "{$user}-",  $email, 'dev.openconext.local', $slugs);
+    $dev_domain_accounts = array_merge($dev_domain_accounts, array_diff(array_keys($config['example-userpass']), $before));
+
     account_gen($config, "{$user}-a", $email, 'institution-a.example.com', $slugs);
     account_gen($config, "{$user}-b", $email, 'institution-b.example.com', $slugs);
     account_gen($config, "{$user}-c", $email, 'institution-c.example.com', $slugs);
@@ -193,6 +215,14 @@ foreach ($accounts as $user => $email) {
     account_gen($config, "{$user}-f", $email, 'Institution-f.example.com', $slugs);
 }
 
+// Usernames that can log in, but that are not offered in the username list (datalist) on the login page
+// (see docker/modules/openconext/src/Auth/Source/UserPass.php). The entra-mock-userpass authsource below
+// copies this option.
+$config['example-userpass']['datalist.hide'] = array_map(
+    function ($userpass) { return explode(':', $userpass, 2)[0]; },
+    $dev_domain_accounts
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 // Authentication source for the EntraID mock IdP (see saml20-idp-hosted.php).
 //
@@ -200,12 +230,18 @@ foreach ($accounts as $user => $email) {
 // like "jane-a1" can also authenticate at the mock IdP with the same username, using the
 // email address that was generated for that account.
 //
+// The authsource also uses the 'openconext:UserPass' class (see docker/modules/openconext),
+// which only needs the username: the password part of the 'username:password' account
+// entries below is ignored, like at a real EntraID login. The login page of the mock IdP
+// has no password field (see the 'openconext:openconext' theme).
+//
 // The authsource has its own id ('entra-mock-userpass'), so a session at the main IdP
 // ('example-userpass') is never reused at the mock IdP: no SSO between the two IdPs.
 //
 // The special account "cancel" simulates a user cancelling the authentication at the
-// (mock) EntraID: the authproc of the mock IdP returns a SAML error response
-// (Responder / AuthnFailed) to the SP for it.
+// (mock) EntraID: the Cancel button on the login page submits the form with this username,
+// and the cancel authproc filter of the mock IdP (see saml20-idp-hosted.php) returns a SAML
+// error response (Responder / AuthnFailed) to the SP for it.
 
 // Copy the accounts, but remove the 'exampleauth:UserPass' class entry (numeric key 0)
 $entra_mock_accounts = $config['example-userpass'];
@@ -217,4 +253,4 @@ $entra_mock_accounts['cancel:cancel'] = array(
     'eduPersonPrincipalName' => 'cancel@dev.openconext.local',
     'schacHomeOrganization' => 'dev.openconext.local',
 );
-$config['entra-mock-userpass'] = array_merge(array('exampleauth:UserPass'), $entra_mock_accounts);
+$config['entra-mock-userpass'] = array_merge(array('openconext:UserPass'), $entra_mock_accounts);

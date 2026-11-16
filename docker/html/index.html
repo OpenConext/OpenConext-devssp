@@ -156,19 +156,16 @@
 
     <h2 id="entra-mock-idp">EntraID mock IdP</h2>
     <p>
-        A second IdP that emulates an EntraID (Azure AD) tenant, for testing the Stepup-AzureMFA GSSP without a real
-        EntraID tenant.
+        A second IdP, intended for testing Stepup-AzureMFA GSSP. Authenticate with the same username and password as the main IdP.
+        Emulate cancelling an authentication by authentication with username <code>cancel</code> and password <code>cancel</code>.
     </p>
     <ul>
         <li>EntityID / IdP metadata: <a href="https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php"><code>https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php</code></a></li>
-        <li>SingleSignOnService endpoint (HTTP-Redirect): <code>https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService</code></li>
+        <li>SingleSignOnService endpoint: <code>https://ssp.dev.openconext.local/entra-mock/module.php/saml/idp/singleSignOnService</code></li>
     </ul>
     <p>
-        Authenticate with the same username and password as at the main IdP (see <a href="#test-accounts">Test accounts</a>),
-        e.g. <code>jane-a1</code> / <code>jane-a1</code>. There is no SSO, neither with the main IdP nor at the mock
-        itself: every authentication shows the login page.
-        Emulate a user cancelling the authentication at EntraID by logging in with username <code>cancel</code> and
-        password <code>cancel</code>.
+        Authenticate with the same username as at the main IdP (see <a href="#test-accounts">Test accounts</a>),
+        e.g. <code>jane-a1</code>.
     </p>
 
     <h2 id="tools">Tools</h2>

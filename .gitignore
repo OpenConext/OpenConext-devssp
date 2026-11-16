@@ -1,2 +1,4 @@
 .idea/
 /container/
+/tests/vendor/
+/tests/.phpunit.cache/

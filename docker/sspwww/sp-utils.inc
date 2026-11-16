@@ -3,6 +3,12 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // Utilities for generating HTML
 
+/** Escape a value for use in HTML text and (quoted) attribute values */
+function e($value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
+}
+
 /** Derive a HTML color from a string value
  *
  * The same string value will always generate the same color. The returned color is suitable for use
@@ -70,17 +76,100 @@ function HTMLColorFingerprint($value)
 }
 
 
-function XMLTextNode2HTML_TS($domnode)
+/**
+ * Show fields of a SAML Response that was captured by the ACS of the debugsp module
+ * (see docker/modules/debugsp/src/Controller/ServiceProvider.php) in a Field / Value table, like the
+ * attributes. Empty fields are skipped. Timestamps are shown with their offset to the current time.
+ */
+function SAMLResponseFieldsToTable(array $samlResponse, array $fields)
 {
-    if (!is_null($domnode) && isset($domnode[0])) {
-        $time = SimpleSAML_Utilities::parseSAML2Time($domnode[0]->textContent);
-        $offset = $time - time();
-        $str = '<b>'.gmdate('r', $time).'</b>';
-        $str .= ' (now '. (($offset>0) ? '+':'') . round(($offset/60)) . ' minutes)';
-        return $str;
+    echo "<div>\n<table class='saml-fields'>\n<tr><th>Field</th><th>Value</th></tr>\n";
+    foreach ($fields as $field) {
+        if (!isset($samlResponse[$field]) || $samlResponse[$field] === '') {
+            continue;
+        }
+        $value = $samlResponse[$field];
+        $style = SAMLFieldIsFingerprinted($field) ? " style='background-color: " . HTMLColorFingerprint($value) . "'" : '';
+        $extra = SAMLTimeOffsetToHTML($field, $value);
+        echo "<tr><td>" . htmlentities($field) . "</td><td><code{$style}>" . htmlentities($value) . "</code>{$extra}</td></tr>\n";
     }
+    echo "</table>\n</div>\n";
+}
 
-    return '<i>N/A</i>';
+
+/**
+ * Whether the value of a SAML Response field gets a background color derived from the value
+ * (HTMLColorFingerprint()), so it is easy to spot where the same value is used: IDs and timestamps
+ */
+function SAMLFieldIsFingerprinted(string $field): bool
+{
+    return in_array($field, array('ID', 'InResponseTo', 'Assertion ID', 'SessionIndex'), true)
+        || preg_match('/(Instant|NotBefore|NotOnOrAfter)$/', $field) === 1;
+}
+
+
+/** For a SAML timestamp field: its offset to the current time, e.g. " (now +5 minutes)". '' for other fields. */
+function SAMLTimeOffsetToHTML(string $field, string $value): string
+{
+    if (!preg_match('/(Instant|NotBefore|NotOnOrAfter)$/', $field)) {
+        return '';
+    }
+    $time = strtotime($value);
+    if ($time === false) {
+        return '';
+    }
+    $minutes = (int) round(($time - time()) / 60);
+    return '<small>&nbsp;(now ' . ($minutes > 0 ? '+' : '') . $minutes . ' minutes)</small>';
+}
+
+
+/**
+ * Show the XML of a SAML Response captured by the debugsp module: pretty-printed for readability, and
+ * verbatim (as received) in a collapsed section, because the pretty-printed version is not the signed XML.
+ *
+ * In the pretty-printed XML, attribute values and element texts that are equal to the value of a
+ * fingerprinted field (see SAMLFieldIsFingerprinted()) get the same background color as in the tables.
+ * A reference to an ID ("#" + ID, e.g. in ds:Reference/@URI) gets the color of the ID.
+ */
+function SAMLResponseXMLToHTML(array $samlResponse)
+{
+    $xml = $samlResponse['xml'];
+
+    $colors = array();  // value => color
+    foreach ($samlResponse as $field => $value) {
+        if (is_string($value) && $value !== '' && SAMLFieldIsFingerprinted($field)) {
+            $colors[$value] = HTMLColorFingerprint($value);
+        }
+    }
+    $highlight = static function (string $escapedValue) use ($colors): string {
+        $value = html_entity_decode($escapedValue, ENT_QUOTES | ENT_HTML401);
+        $id = str_starts_with($value, '#') ? substr($value, 1) : $value;
+        if (!isset($colors[$id])) {
+            return $escapedValue;
+        }
+        return "<span style='background-color: {$colors[$id]}'>{$escapedValue}</span>";
+    };
+
+    $doc = new DOMDocument();
+    $doc->preserveWhiteSpace = false;
+    $doc->formatOutput = true;
+    if (@$doc->loadXML($xml)) {
+        $html = htmlentities($doc->saveXML($doc->documentElement));
+        // Attribute values: name="value". Only whole values match, values with entities (&) are skipped.
+        $html = preg_replace_callback(
+            '/(=&quot;)([^&]+)(&quot;)/',
+            static fn (array $m): string => $m[1] . $highlight($m[2]) . $m[3],
+            $html
+        );
+        // Element text: <element>value</element>
+        $html = preg_replace_callback(
+            '/(&gt;)([^&\n]+)(&lt;\/)/',
+            static fn (array $m): string => $m[1] . $highlight($m[2]) . $m[3],
+            $html
+        );
+        echo "<pre class='saml-xml' id='saml-xml-pretty'>{$html}</pre>\n";
+    }
+    echo "<details><summary>Verbatim XML (as received)</summary><pre class='saml-xml' id='saml-xml-verbatim'>" . htmlentities($xml) . "</pre></details>\n";
 }
 
 
@@ -122,36 +211,50 @@ function AttributeNameToHTML($attribute) {
 }
 
 
-function XMLTextNode2HTML($domnode)
+
+
+/**
+ * Render a field of the login form of the Test SP: its label and input, followed by a line break
+ *
+ * @param array $fields The fields of the form (see sp-fields.inc)
+ * @param string $name Name of the field to render
+ * @param array $params The values of the fields
+ */
+function renderField(array $fields, string $name, array $params): void
 {
-    if (!is_null($domnode) && isset($domnode[0])) {
-        return '<b>'.htmlentities($domnode[0]->textContent).'</b>';
+    $field = $fields[$name];
+    $id = e($field['id'] ?? $name);
+    $value = $params[$name] ?? '';
+    $title = isset($field['help']) ? ' title="' . e($field['help']) . '"' : '';
+
+    echo "<label for=\"{$id}\"{$title}>" . e($field['label']) . "</label>";
+    switch ($field['type']) {
+        case 'select':
+            echo "<select id=\"{$id}\" name=\"" . e($name) . "\">";
+            foreach ($field['options'] as $optionValue => $display) {
+                $selected = (string) $optionValue === $value ? ' selected="selected"' : '';
+                echo "<option value=\"" . e($optionValue) . "\"{$selected}>" . e($display) . "</option>";
+            }
+            echo "</select>";
+            break;
+        case 'checkbox':
+            $checked = $value === 'true' ? ' checked="checked"' : '';
+            echo "<input id=\"{$id}\" type=\"checkbox\" name=\"" . e($name) . "\" value=\"true\"{$checked} />";
+            break;
+        case 'text':
+            $listOf = $field['list'] ?? (isset($field['datalist']) ? $name : null);
+            $list = $listOf !== null ? ' list="' . e($listOf) . '_list"' : '';
+            echo "<input id=\"{$id}\" type=\"text\" name=\"" . e($name) . "\"{$list} value=\"" . e($value) . "\" size=\"80\" />";
+            if (isset($field['datalist'])) {
+                echo "<datalist id=\"" . e($name) . "_list\">";
+                foreach ($field['datalist'] as $option) {
+                    echo "<option value=\"" . e($option) . "\"></option>";
+                }
+                echo "</datalist>";
+            }
+            break;
     }
-
-    return '<i>N/A</i>';
-}
-
-
-function HTML_select($label, $id, $options, $value="", $info="")
-{
-    $label=htmlentities($label);
-    $id=htmlentities($id);
-    $value=htmlentities($value);
-    echo "<p><label";
-    $info=htmlentities($info);
-    if (strlen($info)>0)
-        echo " title=\"{$info}\"";
-    echo ">{$label}</label><select id=\"{$id}\" name=\"{$id}\">";
-    foreach ($options as $name => $display) {
-        $name=htmlentities($name);
-        $display=htmlentities($display);
-        echo "<option value=\"{$name}\"";
-        if ($name==$value) {
-            echo " selected=\"selected\"";
-        }
-        echo ">{$display}</option>";
-    }
-    echo "</select></p>";
+    echo "<br />\n";
 }
 
 
