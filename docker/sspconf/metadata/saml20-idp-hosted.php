@@ -246,6 +246,8 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 // - Assertions are signed with entra-mock-idp.key; AzureMFA validates them against
 //   entra-mock-idp.crt. These key/cert files are not part of this repository, they are
 //   provided in the cert dir (mounted from OpenConext-devconf/stepup/ssp in devconf).
+// - Only the mail, eduPersonPrincipalName and authnmethodsreferences attributes are released
+//   (see $entra_mock_attribute_limit below).
 //
 // The institutions.yaml of the AzureMFA service in OpenConext-devconf should point to:
 //   entity_id:    https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php
@@ -255,13 +257,15 @@ $metadata['https://ssp.dev.openconext.local/simplesaml/saml2/idp/metadata.php'] 
 
 $entra_mock_authproc = array(
 
-    // Generate an unspecified NameID for use by this IdP, using the value of the "NameID"
-    // attribute from the authsource as the NameID in the Subject of the SAML Assertion
+    // Generate an emailAddress NameID with the userPrincipalName (UPN) of the user, like EntraID
+    // does. The eduPersonPrincipalName of the account (uid@schacHomeOrganization, e.g.
+    // jane-a1@institution-a.example.com) is used as UPN. This NameID deliberately differs from
+    // the urn:collab:person:... NameID of the main IdP and from the mail attribute, so that an
+    // SP that wrongly uses the NameID instead of the mail attribute breaks.
     1 => array(
         'class' => 'saml:AttributeNameID',
-        'attribute' => 'NameID',
-        'identifyingAttribute' => 'NameID',
-        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+        'identifyingAttribute' => 'eduPersonPrincipalName',
+        'Format' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 
         // Don't add NameQualifier and SPNameQualifier attributes to the generated NameID
         'NameQualifier' => FALSE,
@@ -298,17 +302,10 @@ $entra_mock_authproc = array(
         '%remove',
     ),
 
-    // AzureMFA validates that the mail attribute in the response contains the email
-    // address the user registered with. Use the email address generated for the account
-    // (eduPersonPrincipalName, i.e. uid@schacHomeOrganization), e.g. jane-a1@institution-a.example.com
-    7 => array(
-        'class' => 'core:PHP',
-        'code' => '
-            if (isset($attributes["eduPersonPrincipalName"][0])) {
-                $attributes["mail"] = array($attributes["eduPersonPrincipalName"][0]);
-            }
-        ',
-    ),
+    // Note: the mail attribute of the account is released unchanged. In this setup that means that email addresses
+    // look like jane+jane-a1@dev.openconext.local. For registration and authentication this
+    // is the email address used during registration; for the GSSP fallback it is the subject
+    // (mail) that the SP passes in the GSSP extension.
 
     // Convert "short" attribute names (uid, mail, ...) to their long urn:mace... equivalent.
     // The map is defined in sspattributemap/Openconext_short_to_urn.php
@@ -322,6 +319,19 @@ $entra_mock_authproc = array(
     20 => array(
         'class' => 'core:AttributeAdd',
         'http://schemas.microsoft.com/claims/authnmethodsreferences' => array('http://schemas.microsoft.com/claims/multipleauthn'),
+    ),
+);
+
+// Only these attributes are released by the mock IdP, like a real EntraID tenant releases only
+// a few attributes. This filter runs last in the authproc (after the Attribute Authority
+// authproc at key 100), so AA attributes are limited as well. It runs after the AttributeMap
+// (key 10), so the attribute names are already in their urn:mace:... form here.
+$entra_mock_attribute_limit = array(
+    200 => array(
+        'class' => 'core:AttributeLimit',
+        'urn:mace:dir:attribute-def:mail',
+        'urn:mace:dir:attribute-def:eduPersonPrincipalName',
+        'http://schemas.microsoft.com/claims/authnmethodsreferences',
     ),
 );
 
@@ -361,11 +371,15 @@ $metadata['https://ssp.dev.openconext.local/entra-mock/saml2/idp/metadata.php'] 
 
     'attributes.NameFormat' => 'urn:oasis:names:tc:SAML:2.0:attrname-format:uri',
 
-    // Use an unspecified NameID. The NameID is generated in the authproc above.
-    // This is the NameID that will be put in the Subject of the SAML Assertion
-    'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+    // Use an emailAddress NameID with the UPN like entraID does.
+    // The NameID is generated in the authproc above.
+    // This is the NameID that will be put in the Subject of the SAML Assertion, also when the SP
+    // requests another NameID format.
+    'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
 
-    'authproc' => array_merge($entra_mock_authproc, $attribute_authority_authproc),
+    // Allow $attribute_authority_authproc to be used with EntraID too for e.g. specifying a custom email address.
+    // The attribute limit runs last, so only mail, eduPersonPrincipalName and authnmethodsreferences are released.
+    'authproc' => array_merge($entra_mock_authproc, $attribute_authority_authproc, $entra_mock_attribute_limit),
 
 );
 
